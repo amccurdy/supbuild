@@ -8,5 +8,5 @@ echo "   supbuild-rm425"
 echo "   supbuild-rm424"
 echo "   supbuild-poweron"
 echo "   supbuild-poweroff"
-echo "   supbuild-delete <uuid>  (NOTE: this requires vms to be powered off) 
+echo "   supbuild-delete <uuid>"
 echo ""
