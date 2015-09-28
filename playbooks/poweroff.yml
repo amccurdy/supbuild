@@ -1,0 +1,15 @@
+- hosts: supxen3.zenoss.loc
+  remote_user: root
+
+  tasks:
+
+  - name: Prepare paths and files
+    local_action: shell echo `whoami`
+    register: username
+
+  - name: Prepare paths and files part2
+    local_action: shell cat /tmp/.supbuild-poweroff-{{ username.stdout }}
+    register: uuid_to_poweroff
+    
+  - name: Powering off VM
+    command: xe vm-shutdown --force  vm="{{ uuid_to_poweroff.stdout }}"
