@@ -1,4 +1,4 @@
-- hosts: supxen2.zenoss.loc
+- hosts: supxen3.zenoss.loc
   remote_user: root
 
   tasks:
@@ -8,7 +8,7 @@
     register: new_vm_name
 
   - name: Copy VM from template
-    command: xe vm-copy vm="242a4a92-15a0-6018-3b7c-e19352da361e" new-name-label="{{ new_vm_name.stdout }}"
+    command: xe vm-copy vm="9b768e47-0b86-baaa-502f-f94f7fe65d92" new-name-label="{{ new_vm_name.stdout }}"
     register: vm
  
   - name: Start VM
