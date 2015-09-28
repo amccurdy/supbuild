@@ -1,0 +1,10 @@
+#!/bin/bash
+echo "Usage: supbuild-<option>"
+echo " examples:"
+echo "   supbuild-list"
+echo "   supbuild-cent7        (this is for 5.x VMs)"
+echo "   supbuild-cent6"
+echo "   supbuild-rm425"
+echo "   supbuild-rm424"
+echo "   supbuild-delete <uuid>"
+echo ""

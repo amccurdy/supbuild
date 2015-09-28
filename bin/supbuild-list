@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "If you get an error, it's because you probably don't have any VMs. Make some and then run try again."
+echo ""
+sleep 1
+
+ansible-playbook /opt/supbuild/playbooks/list_vms.yml

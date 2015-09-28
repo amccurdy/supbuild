@@ -1,0 +1,10 @@
+- hosts: supxen3.zenoss.loc
+  remote_user: root
+  tasks:
+  - name: Getting local user
+    local_action: command whoami
+    register: userid
+
+  - name: Fetching list of VMs
+    shell: xe vm-list params=name-label,uuid,power-state,networks | grep -B 1 -A 2 "{{ userid.stdout }}"
+    register: vmlist
