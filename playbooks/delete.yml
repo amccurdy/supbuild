@@ -10,9 +10,6 @@
   - name: Prepare paths and files part2
     local_action: shell cat /tmp/.supbuild-delete-{{ username.stdout }}
     register: uuid_to_delete
-    
-  - name: Powering off VM
-    command: xe vm-shutdown --force  vm="{{ uuid_to_delete.stdout }}"
  
   - name: Deleting VM
     shell: xe vm-uninstall --force vm="{{ uuid_to_delete.stdout }}"
