@@ -12,4 +12,4 @@
     register: uuid_to_poweroff
     
   - name: Powering off VM
-    command: xe vm-shutdown --force  vm="{{ uuid_to_poweroff.stdout }}"
+    command: xe vm-shutdown --force  vm="{{ uuid_to_poweroff.stdout }}"; echo ''

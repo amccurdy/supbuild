@@ -12,4 +12,4 @@
     register: uuid_to_delete
  
   - name: Deleting VM
-    shell: xe vm-uninstall --force vm="{{ uuid_to_delete.stdout }}"
+    shell: xe vm-uninstall --force vm="{{ uuid_to_delete.stdout }}"; echo ''

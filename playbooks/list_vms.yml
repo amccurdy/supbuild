@@ -6,6 +6,6 @@
     register: userid
 
   - name: Fetching list of VMs
-    shell: xe vm-list params=name-label,uuid,power-state,networks | grep -B 1 -A 2 "{{ userid.stdout }}"
+    shell: xe vm-list params=name-label,uuid,power-state,networks | grep -B 1 -A 2 "{{ userid.stdout }}"; echo ''
     register: vmlist
     ignore_errors: yes
