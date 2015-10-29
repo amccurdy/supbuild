@@ -16,6 +16,8 @@ echo ""
 
 if [[ $REPLY == y* || $REPLY == Y* ]]
  then
+  echo "This is going to try to delete the VM on two xenservers. One is going to fail, so you will get a warning about that. That's ok. You're just looking for a message saying 'All objects destroyed.'"
+  sleep 2
   echo $1 > /tmp/.supbuild-delete-$USER
   ansible-playbook /opt/supbuild/playbooks/delete.yml
   exit 0

@@ -16,6 +16,8 @@ echo ""
 
 if [[ $REPLY == y* || $REPLY == Y* ]]
  then
+  echo "This is going to try it on two machines. Only one will work, so one will fail. That is ok."
+  sleep 2
   echo $1 > /tmp/.supbuild-poweroff-$USER
   ansible-playbook /opt/supbuild/playbooks/poweroff.yml
   exit 0

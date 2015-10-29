@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "If you get an error, it's because you probably don't have any VMs. Make some and then run try again."
+echo "If you get an error, it's because you probably don't have VMs on both hosts. It's ok -- don't worry."
 echo ""
 sleep 1
 
