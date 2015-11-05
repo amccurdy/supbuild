@@ -1,4 +1,4 @@
-- hosts: supxen3.zenoss.loc
+- hosts: xenservers
   remote_user: root
   tasks:
   - name: Fetching list of VMs
