@@ -12,4 +12,4 @@
     register: uuid_to_poweron
     
   - name: Powering on VM
-    command: xe vm-start vm="{{ uuid_to_poweron.stdout }}"; echo ''
+    command: xe vm-start vm="{{ uuid_to_poweron.stdout }}" ;echo ''
