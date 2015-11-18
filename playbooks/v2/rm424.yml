@@ -1,0 +1,23 @@
+- hosts: supxen2.zenoss.loc
+  remote_user: root
+
+  tasks:
+
+  - name: Create new VM name
+    local_action: shell echo `whoami`-rm424-ansible-`date +"%x_%k:%M"`
+    register: new_vm_name
+
+  - name: Copy VM from template
+    command: xe vm-copy vm="aa9ad0c5-e6c5-9b17-480f-990e64786507" new-name-label="{{ new_vm_name.stdout }}"
+    register: vm
+ 
+  - name: Start VM
+    command: xe vm-start uuid="{{ vm.stdout }}"
+
+  - name: Wait n seconds for DHCP
+    pause: seconds=30
+
+  - name: Capture IP address assigned by DHCP
+    shell: xe vm-list uuid="{{ vm.stdout }}" params=networks | awk '{print $5}' | sed s/\;// | head -n 1
+    register: ipaddress
+
