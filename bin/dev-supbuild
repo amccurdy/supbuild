@@ -1,18 +1,53 @@
 #!/usr/bin/env python
+import argparse
+import sys
+
 from ansible.playbook import PlayBook
 from ansible.inventory import Inventory
 from ansible import callbacks
 from ansible import utils
 
-utils.VERBOSITY = 0
-playbook_cb = callbacks.PlaybookCallbacks(verbose=utils.VERBOSITY)
-stats = callbacks.AggregateStats()
-runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY)
+parser = argparse.ArgumentParser()
+parser.add_argument('action', help='build, list, delete, power-on, power-off')
+args = parser.parse_args()
 
-pb = PlayBook(
-    playbook='/opt/supbuild/playbooks/list_vms.yml',
-    callbacks=playbook_cb,
-    runner_callbacks=runner_cb,
-    stats=stats)
+def create_playbook(booktype):
+    book_map = {
+        'rm425': '/opt/supbuild/playbooks/rm425.yml',
+        'rm424': '/opt/supbuild/playbooks/rm424.yml',
+        'cent6': '/opt/supbuild/playbooks/cent6.yml',
+        'cent7': '/opt/supbuild/playbooks/cent7.yml',
+        'list': '/opt/supbuild/playbooks/list_vms.yml',
+        'delete': '/opt/supbuild/playbooks/delete.yml',
+        'power-on': '/opt/supbuild/playbooks/poweron.yml',
+        'power-off': '/opt/supbuild/playbooks/poweroff.yml'
+    }
+    if booktype not in book_map.keys():
+        print 'Unsupported booktype: %s' % (booktype)
+        sys.exit(1)
+    book_path = book_map[booktype]
+    utils.VERBOSITY = 0
+    playbook_cb = callbacks.PlaybookCallbacks(verbose=utils.VERBOSITY)
+    stats = callbacks.AggregateStats()
+    runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY)
+    pb = PlayBook(
+        playbook=book_path,
+        callbacks=playbook_cb,
+        runner_callbacks=runner_cb,
+        stats=stats
+    )
+    return pb
 
-results = pb.run()
+class __main__():
+    if args.action == 'build':
+        print 'BUILD WHAT?!'
+    elif args.action == 'list':
+        this_run = create_playbook('list')
+        this_run.run()
+    elif args.action == 'delete':
+        print 'delete stuff'
+    elif args.action == 'power-on':
+        print 'power-on stuff'
+    elif args.action == 'power-off':
+        print 'power-off stuff'
+
