@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+from ansible.playbook import PlayBook
+from ansible.inventory import Inventory
+from ansible import callbacks
+from ansible import utils
+
+utils.VERBOSITY = 0
+playbook_cb = callbacks.PlaybookCallbacks(verbose=utils.VERBOSITY)
+stats = callbacks.AggregateStats()
+runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY)
+
+pb = PlayBook(
+    playbook='/opt/supbuild/playbooks/list_vms.yml',
+    callbacks=playbook_cb,
+    runner_callbacks=runner_cb,
+    stats=stats)
+
+results = pb.run()
