@@ -2,6 +2,7 @@
 import argparse
 import sys
 import getpass
+import time
 from operator import itemgetter
 
 from ansible import runner
@@ -15,13 +16,13 @@ args = parser.parse_args()
 #hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
 vmtypes = ['rm424', 'rm425', 'cent6', 'cent7']
 templatemap = {
-    'supxen1.zenoss.loc': {}
+    'supxen1.zenoss.loc': {},
     'supxen2.zenoss.loc': {
         'rm424': 'aa9ad0c5-e6c5-9b17-480f-990e64786507',
         'rm425': '242a4a92-15a0-6018-3b7c-e19352da361e',
         'cent6': '6173583a-3950-a00c-00b1-1dbd2dbece55',
         'cent7': '25b456c9-bd55-9268-5db9-548c6f243b7f'
-    }
+    },
     'supxen3.zenoss.loc': {
         'rm424': '9b768e47-0b86-baaa-502f-f94f7fe65d92',
         'rm425': '30c5fdf6-60b7-a3dc-d5e0-c61760b1a704',
@@ -81,6 +82,56 @@ def elect_target_host():
     winner = election[0][0]
     return winner
 
+def build_vm(host, vmtype, vmname):
+    try: 
+        source_uuid = templatemap[host][vmtype]
+    except KeyError as e:
+        print 'Unsupported host or vmtype: %s, %s' % (host, vmtype)
+        raise(e)
+    cmd = 'xe vm-copy vm=%s new-name-label=%s' % (source_uuid, vmname)
+    task = runner.Runner(
+        module_name='shell',
+        module_args=cmd,
+        run_hosts=[host]
+    )
+    results = task.run()
+
+def fetch_vm_uid(host, vmname):
+    cmd = 'xe vm-list name-label=\'%s\' params=uuid |  sed  \'s/uuid ( RO)    : //\'' % (vmname)
+    task = runner.Runner(
+        module_name='shell',
+        module_args=cmd,
+        run_hosts=[host]
+    )
+    results = task.run()
+    uuid_dirty = results['contacted'][host]['stdout']
+    uuid_clean = uuid_dirty.replace('\n','')
+    return uuid_clean
+
+def poweron(host, uuid):
+    cmd = 'xe vm-start vm=%s' % (uuid)
+    task = runner.Runner(
+        module_name='shell',
+        module_args=cmd
+    )
+    results = task.run()
+    messages = results['contacted']
+    for k,v in messages.iteritems():
+       if len(v['stderr']) == 0:
+           return k
+
+def get_ip(host, uuid):
+    cmd = 'xe vm-list uuid=\'%s\' params=networks | awk \'{print $5}\' | sed s/\;// | head -n 1' % (uuid)
+    task = runner.Runner(
+        module_name='shell',
+        module_args=cmd,
+        run_hosts=[host]
+    )
+    results = task.run()
+    ip_dirty = results['contacted'][host]['stdout']
+    ip_clean = ip_dirty.replace('\n','')
+    return ip_clean
+
 class __main__():
     if args.action == 'mem':
         mem_util = get_memory_utilization()
@@ -97,8 +148,34 @@ class __main__():
             print 'Unrecognized vmtype: %s. Specify a valid vmtype or use -h for help.' % (args.vmtype)
             sys.exit(1)
         else:
+            user = get_user()
             vmtype = args.vmtype
-            print 'yeah I\'ll totally build you a %s VM' % (vmtype)
+            user = get_user()
+            ts = time.strftime('%m/%d_%H:%M')
+            vmname = '%s-%s-ansible-%s' % (user, vmtype, ts)
+            host = elect_target_host()
+            print 'Using %s to create %s' % (host, vmname)
+            build_vm(host, vmtype, vmname)
+            print 'VM Created, grabbing uuid so we can power it on.'
+            vm_uuid = fetch_vm_uid(host, vmname)
+            start_it = poweron(host, vm_uuid)
+            if start_it: 
+                print 'Successfully started %s on %s. Waiting for IP address' % (vmname, start_it)
+            else:
+                print 'VM created but didn\'t start for some reason. Try to power it on manually.'
+            time.sleep(60)
+            new_ip = get_ip(host, vm_uuid)
+            if new_ip:
+                print 'IP address: %s' % (new_ip)
+            else: 
+                print 'No IP yet. Waiting 60 more seconds.'
+                time.sleep(60)
+                new_ip = get_ip(host, vm_uuid)
+                if new_ip: 
+                    print 'IP address: %s' % (new_ip)
+                else: 
+                    print 'Couldn\'t get an IP. Try waiting for a minute or two and then checking back'
+
     elif args.action in ['list','list-all']:
         if args.action == 'list':
             results = list_vms()
