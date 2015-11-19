@@ -1,15 +1,20 @@
 #!/usr/bin/env python
 import argparse
 import sys
+import getpass
 
 from ansible.playbook import PlayBook
 from ansible.inventory import Inventory
 from ansible import callbacks
 from ansible import utils
+from ansible import runner
 
 parser = argparse.ArgumentParser()
 parser.add_argument('action', help='build, list, delete, power-on, power-off')
 args = parser.parse_args()
+
+def get_user():
+    return getpass.getuser()
 
 def create_playbook(booktype):
     book_map = {
@@ -38,12 +43,29 @@ def create_playbook(booktype):
     )
     return pb
 
-def __main__():
+def list_vms():
+    user = get_user()
+    cmd = 'xe vm-list params=name-label,uuid,power-state,networks | grep -B1 -A2 %s' % (user)
+    task = runner.Runner(
+        module_name='shell',
+        module_args=cmd
+    )
+    results = task.run()
+    return results
+
+class __main__():
     if args.action == 'build':
         print 'BUILD WHAT?!'
-#    elif args.action == 'list':
-#        this_run = create_playbook('list')
-#        results = this_run.run()
+    elif args.action == 'list':
+        results = list_vms()
+        contacted = results['contacted']
+        for host, output in contacted.iteritems():
+            stdout = output['stdout']
+            if len(stdout) == 0:
+                stdout = ' - None\n'
+            print 'Host: %s' % (host)
+            for line in stdout.split('\n'):
+                print line
     elif args.action == 'delete':
         print 'delete stuff'
     elif args.action == 'power-on':
@@ -51,5 +73,3 @@ def __main__():
     elif args.action == 'power-off':
         print 'power-off stuff'
 
-this_run = create_playbook('list')
-results = this_run.run()
