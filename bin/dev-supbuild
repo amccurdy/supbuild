@@ -14,6 +14,21 @@ args = parser.parse_args()
 
 #hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
 vmtypes = ['rm424', 'rm425', 'cent6', 'cent7']
+templatemap = {
+    'supxen1.zenoss.loc': {}
+    'supxen2.zenoss.loc': {
+        'rm424': 'aa9ad0c5-e6c5-9b17-480f-990e64786507',
+        'rm425': '242a4a92-15a0-6018-3b7c-e19352da361e',
+        'cent6': '6173583a-3950-a00c-00b1-1dbd2dbece55',
+        'cent7': '25b456c9-bd55-9268-5db9-548c6f243b7f'
+    }
+    'supxen3.zenoss.loc': {
+        'rm424': '9b768e47-0b86-baaa-502f-f94f7fe65d92',
+        'rm425': '30c5fdf6-60b7-a3dc-d5e0-c61760b1a704',
+        'cent6': '8336b007-5ff2-10ce-74cd-72e1ad9db4d7',
+        'cent7': '384037f4-ff88-b0c5-43e4-23464dc7cbac'
+    }
+}
 
 def get_user():
     return getpass.getuser()
