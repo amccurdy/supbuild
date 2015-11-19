@@ -2,13 +2,14 @@
 import argparse
 import sys
 import getpass
+from operator import itemgetter
 
 from ansible import runner
 
 parser = argparse.ArgumentParser()
 parser.add_argument('action', help='build, list, list-all, delete, power-on, power-off')
 parser.add_argument('-v','--vmtype',type=str, help='rm424, rm425, cent6, cent7')
-parser.add_argument('-u','--uuid',type=str, help='uuid')
+parser.add_argument('-u','--uuid',type=str, help='uuid of the VM to be actioned; get this from running a \'list\'')
 args = parser.parse_args()
 
 #hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
@@ -56,6 +57,15 @@ def list_vms_all():
     results = task.run()
     return results
 
+def elect_target_host():
+    util = get_memory_utilization()
+    # temporarily removing supxen1 from the mix
+    if 'supxen1.zenoss.loc' in util.keys():
+        del(util['supxen1.zenoss.loc'])
+    election = sorted(util.items(), key=itemgetter(1))
+    winner = election[0][0]
+    return winner
+
 class __main__():
     if args.action == 'mem':
         mem_util = get_memory_utilization()
@@ -95,3 +105,5 @@ class __main__():
         print 'power-on stuff'
     elif args.action == 'power-off':
         print 'power-off stuff'
+
+print elect_target_host()
