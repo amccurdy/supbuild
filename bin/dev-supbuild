@@ -6,10 +6,13 @@ import getpass
 from ansible import runner
 
 parser = argparse.ArgumentParser()
-parser.add_argument('action', help='build, list, delete, power-on, power-off')
+parser.add_argument('action', help='build, list, list-all, delete, power-on, power-off')
+parser.add_argument('-v','--vmtype',type=str, help='rm424, rm425, cent6, cent7')
+parser.add_argument('-u','--uuid',type=str, help='uuid')
 args = parser.parse_args()
 
-hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
+#hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
+vmtypes = ['rm424', 'rm425', 'cent6', 'cent7']
 
 def get_user():
     return getpass.getuser()
@@ -43,6 +46,16 @@ def list_vms():
     results = task.run()
     return results
 
+def list_vms_all():
+    user = get_user()
+    cmd = 'xe vm-list params=name-label,uuid,power-state,networks | grep -B1 -A2 "name-label"'
+    task = runner.Runner(
+        module_name='shell',
+        module_args=cmd
+    )
+    results = task.run()
+    return results
+
 class __main__():
     if args.action == 'mem':
         mem_util = get_memory_utilization()
@@ -52,9 +65,20 @@ class __main__():
         for key in sorted_hosts:
             print '%s: %s' % (key,mem_util[key])
     elif args.action == 'build':
-        print 'BUILD WHAT?!'
-    elif args.action == 'list':
-        results = list_vms()
+        if not args.vmtype:
+            print 'No vmtype specified. Specify a vmtype or use -h for help.'
+            sys.exit(1)
+        elif args.vmtype not in vmtypes:
+            print 'Unrecognized vmtype: %s. Specify a valid vmtype or use -h for help.' % (args.vmtype)
+            sys.exit(1)
+        else:
+            vmtype = args.vmtype
+            print 'yeah I\'ll totally build you a %s VM' % (vmtype)
+    elif args.action in ['list','list-all']:
+        if args.action == 'list':
+            results = list_vms()
+        else: 
+            results = list_vms_all()
         contacted = results['contacted']
         sorted_hosts = contacted.keys()
         sorted_hosts.sort()
