@@ -9,8 +9,30 @@ parser = argparse.ArgumentParser()
 parser.add_argument('action', help='build, list, delete, power-on, power-off')
 args = parser.parse_args()
 
+hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
+
 def get_user():
     return getpass.getuser()
+
+def get_memory_utilization():
+    cmd = "xentop -b -i1 | awk '{print $6}'"
+    task = runner.Runner(
+        module_name='shell',
+        module_args=cmd
+    )
+    results = task.run()
+    contacted = results['contacted']
+    mem_util = {}
+    for host, output in contacted.iteritems():
+        stdout = output['stdout']
+        util_nums = stdout.replace('MEM(%)','').split('\n')
+        tot = 0
+        for num in util_nums:
+            if len(num) > 0:
+                tot += float(num)
+        mem_util[host] = tot
+    return mem_util
+
 
 def list_vms():
     user = get_user()
@@ -23,7 +45,14 @@ def list_vms():
     return results
 
 class __main__():
-    if args.action == 'build':
+    if args.action == 'mem':
+        mem_util = get_memory_utilization()
+        sorted_keys = mem_util.keys()
+        sorted_keys.sort()
+        print 'Host: % memory utilization'
+        for key in sorted_keys:
+           print '%s: %s' % (key,mem_util[key])
+    elif args.action == 'build':
         print 'BUILD WHAT?!'
     elif args.action == 'list':
         results = list_vms()
@@ -41,4 +70,3 @@ class __main__():
         print 'power-on stuff'
     elif args.action == 'power-off':
         print 'power-off stuff'
-
