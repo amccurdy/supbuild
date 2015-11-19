@@ -3,10 +3,6 @@ import argparse
 import sys
 import getpass
 
-from ansible.playbook import PlayBook
-from ansible.inventory import Inventory
-from ansible import callbacks
-from ansible import utils
 from ansible import runner
 
 parser = argparse.ArgumentParser()
@@ -15,33 +11,6 @@ args = parser.parse_args()
 
 def get_user():
     return getpass.getuser()
-
-def create_playbook(booktype):
-    book_map = {
-        'rm425': '/opt/supbuild/playbooks/v2/rm425.yml',
-        'rm424': '/opt/supbuild/playbooks/v2/rm424.yml',
-        'cent6': '/opt/supbuild/playbooks/v2/cent6.yml',
-        'cent7': '/opt/supbuild/playbooks/v2/cent7.yml',
-        'list': '/opt/supbuild/playbooks/v2/list_vms.yml',
-        'delete': '/opt/supbuild/playbooks/v2/delete.yml',
-        'power-on': '/opt/supbuild/playbooks/v2/poweron.yml',
-        'power-off': '/opt/supbuild/playbooks/v2/poweroff.yml'
-    }
-    if booktype not in book_map.keys():
-        print 'Unsupported booktype: %s' % (booktype)
-        sys.exit(1)
-    book_path = book_map[booktype]
-    verb = 'vvv'
-    playbook_cb = callbacks.PlaybookCallbacks(verbose=verb)
-    stats = callbacks.AggregateStats()
-    runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=verb)
-    pb = PlayBook(
-        playbook=book_path,
-        callbacks=playbook_cb,
-        runner_callbacks=runner_cb,
-        stats=stats
-    )
-    return pb
 
 def list_vms():
     user = get_user()
