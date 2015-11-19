@@ -33,7 +33,6 @@ def get_memory_utilization():
         mem_util[host] = tot
     return mem_util
 
-
 def list_vms():
     user = get_user()
     cmd = 'xe vm-list params=name-label,uuid,power-state,networks | grep -B1 -A2 %s' % (user)
@@ -47,21 +46,23 @@ def list_vms():
 class __main__():
     if args.action == 'mem':
         mem_util = get_memory_utilization()
-        sorted_keys = mem_util.keys()
-        sorted_keys.sort()
+        sorted_hosts = mem_util.keys()
+        sorted_hosts.sort()
         print 'Host: % memory utilization'
-        for key in sorted_keys:
+        for key in sorted_hosts:
            print '%s: %s' % (key,mem_util[key])
     elif args.action == 'build':
         print 'BUILD WHAT?!'
     elif args.action == 'list':
         results = list_vms()
         contacted = results['contacted']
-        for host, output in contacted.iteritems():
-            stdout = output['stdout']
+        sorted_hosts = contacted.keys()
+        sorted_hosts.sort()
+        for host in sorted_hosts:
+            stdout = contacted[host]['stdout']
             if len(stdout) == 0:
                 stdout = ' - None\n'
-            print 'Host: %s' % (host)
+            print '\nHost: %s' % (host)
             for line in stdout.split('\n'):
                 print line
     elif args.action == 'delete':
