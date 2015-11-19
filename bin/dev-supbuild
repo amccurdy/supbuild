@@ -108,8 +108,20 @@ def fetch_vm_uid(host, vmname):
     uuid_clean = uuid_dirty.replace('\n','')
     return uuid_clean
 
-def poweron(host, uuid):
+def poweron(uuid):
     cmd = 'xe vm-start vm=%s' % (uuid)
+    task = runner.Runner(
+        module_name='shell',
+        module_args=cmd
+    )
+    results = task.run()
+    messages = results['contacted']
+    for k,v in messages.iteritems():
+       if len(v['stderr']) == 0:
+           return k
+
+def poweroff(uuid):
+    cmd = 'xe vm-shutdown --force vm=%s' % (uuid)
     task = runner.Runner(
         module_name='shell',
         module_args=cmd
@@ -158,7 +170,7 @@ class __main__():
             build_vm(host, vmtype, vmname)
             print 'VM Created, grabbing uuid so we can power it on.'
             vm_uuid = fetch_vm_uid(host, vmname)
-            start_it = poweron(host, vm_uuid)
+            start_it = poweron(vm_uuid)
             if start_it: 
                 print 'Successfully started %s on %s. Waiting for IP address' % (vmname, start_it)
             else:
@@ -192,9 +204,30 @@ class __main__():
             for line in stdout.split('\n'):
                 print line
     elif args.action == 'delete':
-        print 'delete stuff'
+        if not args.uuid:
+            print 'No UUID specified. Specify a UUID or use -h for help.'
+            sys.exit(1)
     elif args.action == 'power-on':
-        print 'power-on stuff'
+        if not args.uuid:
+            print 'No UUID specified. Specify a UUID or use -h for help.'
+            sys.exit(1)
+        uuid = args.uuid
+        start_it = poweron(uuid)
+        if start_it: 
+            'Successfully started %s on %s' % (uuid, start_it)
+        else:
+            'Problem starting %s, quitting.' % (uuid)
+            sys.exit(1)
     elif args.action == 'power-off':
-        print 'power-off stuff'
+        if not args.uuid:
+            print 'No UUID specified. Specify a UUID or use -h for help.'
+            sys.exit(1)
+        uuid = args.uuid
+        stop_it = poweroff(uuid)
+        if stop_it:
+            'Successfully stopped %s on %s' % (uuid, stop_it)
+        else:
+            'Problem stopping %s, quitting.' % (uuid)
+            sys.exit(1)
+
 
