@@ -132,6 +132,18 @@ def poweroff(uuid):
        if len(v['stderr']) == 0:
            return k
 
+def delete_vm(uuid):
+    cmd = 'xe vm-uninstall --force vm=%s' % (uuid)
+    task = runner.Runner(
+        module_name='shell',
+        module_args=cmd
+    )
+    results = task.run()
+    messages = results['contacted']
+    for k,v in messages.iteritems():
+       if 'destroyed' in v['stdout'].lower():
+           return k
+
 def get_ip(host, uuid):
     cmd = 'xe vm-list uuid=\'%s\' params=networks | awk \'{print $5}\' | sed s/\;// | head -n 1' % (uuid)
     task = runner.Runner(
@@ -207,27 +219,19 @@ class __main__():
         if not args.uuid:
             print 'No UUID specified. Specify a UUID or use -h for help.'
             sys.exit(1)
+        uuid = args.uuid
+        delete_it = delete_vm(uuid)
+        if delete_it:
+            print 'Deleted %s from %s' % (uuid, delete_it)
     elif args.action == 'power-on':
         if not args.uuid:
             print 'No UUID specified. Specify a UUID or use -h for help.'
             sys.exit(1)
         uuid = args.uuid
         start_it = poweron(uuid)
-        if start_it: 
-            'Successfully started %s on %s' % (uuid, start_it)
-        else:
-            'Problem starting %s, quitting.' % (uuid)
-            sys.exit(1)
     elif args.action == 'power-off':
         if not args.uuid:
             print 'No UUID specified. Specify a UUID or use -h for help.'
             sys.exit(1)
         uuid = args.uuid
         stop_it = poweroff(uuid)
-        if stop_it:
-            'Successfully stopped %s on %s' % (uuid, stop_it)
-        else:
-            'Problem stopping %s, quitting.' % (uuid)
-            sys.exit(1)
-
-
