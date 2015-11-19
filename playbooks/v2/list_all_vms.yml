@@ -1,6 +1,0 @@
-- hosts: xenservers
-  remote_user: root
-  tasks:
-  - name: Fetching list of VMs
-    shell: 'xe vm-list | grep name-label | grep ansible | sort | sed "s/     name-label ( RW)\: //"'
-    register: vmlist
