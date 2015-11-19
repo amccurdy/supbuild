@@ -13,23 +13,23 @@ args = parser.parse_args()
 
 def create_playbook(booktype):
     book_map = {
-        'rm425': '/opt/supbuild/playbooks/rm425.yml',
-        'rm424': '/opt/supbuild/playbooks/rm424.yml',
-        'cent6': '/opt/supbuild/playbooks/cent6.yml',
-        'cent7': '/opt/supbuild/playbooks/cent7.yml',
-        'list': '/opt/supbuild/playbooks/list_vms.yml',
-        'delete': '/opt/supbuild/playbooks/delete.yml',
-        'power-on': '/opt/supbuild/playbooks/poweron.yml',
-        'power-off': '/opt/supbuild/playbooks/poweroff.yml'
+        'rm425': '/opt/supbuild/playbooks/v2/rm425.yml',
+        'rm424': '/opt/supbuild/playbooks/v2/rm424.yml',
+        'cent6': '/opt/supbuild/playbooks/v2/cent6.yml',
+        'cent7': '/opt/supbuild/playbooks/v2/cent7.yml',
+        'list': '/opt/supbuild/playbooks/v2/list_vms.yml',
+        'delete': '/opt/supbuild/playbooks/v2/delete.yml',
+        'power-on': '/opt/supbuild/playbooks/v2/poweron.yml',
+        'power-off': '/opt/supbuild/playbooks/v2/poweroff.yml'
     }
     if booktype not in book_map.keys():
         print 'Unsupported booktype: %s' % (booktype)
         sys.exit(1)
     book_path = book_map[booktype]
-    utils.VERBOSITY = 0
-    playbook_cb = callbacks.PlaybookCallbacks(verbose=utils.VERBOSITY)
+    verb = 'vvv'
+    playbook_cb = callbacks.PlaybookCallbacks(verbose=verb)
     stats = callbacks.AggregateStats()
-    runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY)
+    runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=verb)
     pb = PlayBook(
         playbook=book_path,
         callbacks=playbook_cb,
@@ -38,12 +38,12 @@ def create_playbook(booktype):
     )
     return pb
 
-class __main__():
+def __main__():
     if args.action == 'build':
         print 'BUILD WHAT?!'
-    elif args.action == 'list':
-        this_run = create_playbook('list')
-        this_run.run()
+#    elif args.action == 'list':
+#        this_run = create_playbook('list')
+#        results = this_run.run()
     elif args.action == 'delete':
         print 'delete stuff'
     elif args.action == 'power-on':
@@ -51,3 +51,5 @@ class __main__():
     elif args.action == 'power-off':
         print 'power-off stuff'
 
+this_run = create_playbook('list')
+results = this_run.run()
