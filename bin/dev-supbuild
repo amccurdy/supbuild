@@ -121,4 +121,3 @@ class __main__():
     elif args.action == 'power-off':
         print 'power-off stuff'
 
-print elect_target_host()
