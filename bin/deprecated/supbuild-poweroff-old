@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Make sure we have only one arg
+if [ $# != 1 ]
+ then
+  echo "Usage: supbuild-poweroff <uuid>"
+  echo " You can get the required uuid by running supbuild-list"
+  exit 1
+fi
+
+UUID=$1
+
+echo "You are about to power off a VM with the UUID of $UUID."
+read -p "Are you sure you want to do that? (y/n): " -n 1 -r
+echo ""
+
+if [[ $REPLY == y* || $REPLY == Y* ]]
+ then
+  echo "This is going to try it on two machines. Only one will work, so one will fail. That is ok."
+  sleep 2
+  echo $1 > /tmp/.supbuild-poweroff-$USER
+  ansible-playbook /opt/supbuild/playbooks/poweroff.yml
+  exit 0
+elif [[ $REPLY == n* || $REPLY == N* ]]
+ then
+  echo "Ok fine then, exiting."
+  exit 0
+else
+  echo "Invalid response. Run the command again but do it correctly next time."
+  exit 1
+fi

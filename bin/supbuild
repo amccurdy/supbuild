@@ -221,7 +221,7 @@ class __main__():
         for host in sorted_hosts:
             stdout = contacted[host]['stdout']
             if len(stdout) == 0:
-                stdout = ' - None\n'
+                stdout = ' - None'
             print 'Host: %s' % (host)
             for line in stdout.split('\n'):
                 print line

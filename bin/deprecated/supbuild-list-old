@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "If you get an error, it's because you probably don't have VMs on both hosts. It's ok -- don't worry."
+echo ""
+sleep 1
+
+ansible-playbook /opt/supbuild/playbooks/list_vms.yml
