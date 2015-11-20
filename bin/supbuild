@@ -199,10 +199,12 @@ def get_ip(host, uuid):
     ip_clean = ip_dirty.replace('\n','')
     return ip_clean
 
-def check_for_uuid():
+def get_uuid():
     if not args.uuid:
         print 'No UUID specified. Specify a UUID or run -h for help.'
         sys.exit(1)
+    else:
+        return args.uuid
 
 class __main__():
     if args.action == 'mem':
@@ -269,16 +271,23 @@ class __main__():
                 print line
             print ''
     elif args.action == 'delete':
-        check_for_uuid()
-        uuid = args.uuid
+        uuid = get_uuid()
         delete_it = delete_vm(uuid)
         if delete_it:
             print 'Deleted %s from %s' % (uuid, delete_it)
     elif args.action == 'power-on':
-        check_for_uuid()
-        uuid = args.uuid
+        uuid = get_uuid()
         start_it = poweron(uuid)
+        if start_it:
+            print 'Powered on %s on %s' % (uuid, start_it)
+        else:
+            print 'Something went wrong. Do you have the right uuid?'
+            sys.exit(1)
     elif args.action == 'power-off':
-        check_for_uuid()
-        uuid = args.uuid
+        uuid = get_uuid()
         stop_it = poweroff(uuid)
+        if stop_it:
+            print 'Powered off %s on %s' % (uuid, stop_it)
+        else:
+            print 'Something went wrong. Do you have the right uuid?'
+            sys.exit(1)
