@@ -1,2 +1,0 @@
-#!/bin/bash
-ansible-playbook /opt/supbuild/playbooks/list_all_vms.yml
