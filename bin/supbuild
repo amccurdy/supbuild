@@ -275,6 +275,9 @@ class __main__():
         delete_it = delete_vm(uuid)
         if delete_it:
             print 'Deleted %s from %s' % (uuid, delete_it)
+        else:
+            print 'Something went wrong. Do you have the right uuid?'
+            sys.exit(1)
     elif args.action == 'power-on':
         uuid = get_uuid()
         start_it = poweron(uuid)
