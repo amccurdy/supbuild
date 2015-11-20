@@ -33,9 +33,15 @@ templatemap = {
 }
 
 def get_user():
+    '''
+    Return currently logged-in user
+    '''
     return getpass.getuser()
 
 def get_memory_utilization():
+    '''
+    Return dict with keys of hosts and values of memory utilization in percent
+    '''
     cmd = 'xentop -b -i1 | awk \'{print $6}\''
     task = runner.Runner(
         module_name='shell',
@@ -56,6 +62,9 @@ def get_memory_utilization():
     return mem_util
 
 def list_vms():
+    '''
+    Returns a run-result of VMs containing the name of the currently logged-in user.
+    '''
     user = get_user()
     cmd = 'xe vm-list params=name-label,uuid,power-state,networks | grep -B1 -A2 %s' % (user)
     task = runner.Runner(
@@ -67,6 +76,9 @@ def list_vms():
     return results
 
 def list_vms_all():
+    '''
+    Returns a run-result of VMs on all hosts
+    '''
     user = get_user()
     cmd = 'xe vm-list params=name-label,uuid,power-state,networks | grep -B1 -A2 "name-label"'
     task = runner.Runner(
@@ -78,6 +90,9 @@ def list_vms_all():
     return results
 
 def elect_target_host():
+    '''
+    Returns the name of the VM host with the most free memory
+    '''
     util = get_memory_utilization()
     # temporarily removing supxen1 from the mix
     if 'supxen1.zenoss.loc' in util.keys():
@@ -87,6 +102,9 @@ def elect_target_host():
     return winner
 
 def build_vm(host, vmtype, vmname):
+    '''
+    Returns a run-result of VM creation
+    '''
     try: 
         source_uuid = templatemap[host][vmtype]
     except KeyError as e:
@@ -102,6 +120,9 @@ def build_vm(host, vmtype, vmname):
     results = task.run()
 
 def fetch_vm_uid(host, vmname):
+    '''
+    Returns the UUID of a VM when fed a host and vmname
+    '''
     cmd = 'xe vm-list name-label=\'%s\' params=uuid |  sed  \'s/uuid ( RO)    : //\'' % (vmname)
     task = runner.Runner(
         module_name='shell',
@@ -115,6 +136,9 @@ def fetch_vm_uid(host, vmname):
     return uuid_clean
 
 def poweron(uuid):
+    '''
+    Tries to poweron a machine on all hosts. Returns the host where the poweron succeeded. 
+    '''
     cmd = 'xe vm-start vm=%s' % (uuid)
     task = runner.Runner(
         module_name='shell',
@@ -128,6 +152,9 @@ def poweron(uuid):
            return k
 
 def poweroff(uuid):
+    '''
+    Tries to poweroff a machine on all hosts. Returns the host where the poweroff succeded.
+    '''
     cmd = 'xe vm-shutdown --force vm=%s' % (uuid)
     task = runner.Runner(
         module_name='shell',
@@ -141,6 +168,9 @@ def poweroff(uuid):
            return k
 
 def delete_vm(uuid):
+    '''
+    Tries to delete a machine on all hosts. Returns the host where the delete succeeded.
+    '''
     cmd = 'xe vm-uninstall --force vm=%s' % (uuid)
     task = runner.Runner(
         module_name='shell',
@@ -154,6 +184,9 @@ def delete_vm(uuid):
            return k
 
 def get_ip(host, uuid):
+    '''
+    Returns the IP address (string) of a machine when given a host and UUID
+    '''
     cmd = 'xe vm-list uuid=\'%s\' params=networks | awk \'{print $5}\' | sed s/\;// | head -n 1' % (uuid)
     task = runner.Runner(
         module_name='shell',
@@ -166,9 +199,15 @@ def get_ip(host, uuid):
     ip_clean = ip_dirty.replace('\n','')
     return ip_clean
 
+def check_for_uuid():
+    if not args.uuid:
+        print 'No UUID specified. Specify a UUID or run -h for help.'
+        sys.exit(1)
+
 class __main__():
     if args.action == 'mem':
         mem_util = get_memory_utilization()
+        # the way this is done is admittedly silly, but it puts the results in order based on the host
         sorted_hosts = mem_util.keys()
         sorted_hosts.sort()
         print 'Host: % memory utilization'
@@ -182,10 +221,12 @@ class __main__():
             print 'Unrecognized vmtype: %s. Specify a valid vmtype or use -h for help.' % (args.vmtype)
             sys.exit(1)
         else:
+            # getting data to build the hostname
             user = get_user()
             vmtype = args.vmtype
             user = get_user()
             ts = time.strftime('%m/%d_%H:%M')
+            # this hostname will look something like: amccurdy-rm425-ansible-11/20_12:34
             vmname = '%s-%s-ansible-%s' % (user, vmtype, ts)
             host = elect_target_host()
             print 'Using %s to create %s' % (host, vmname)
@@ -209,12 +250,13 @@ class __main__():
                     print 'IP address: %s' % (new_ip)
                 else: 
                     print 'Couldn\'t get an IP. Try waiting for a minute or two and then checking back'
-
     elif args.action in ['list','list-all']:
+        # fetch results for whichever list we're getting
         if args.action == 'list':
             results = list_vms()
         else: 
             results = list_vms_all()
+        # format the results and print them out, again - silly way of doing it, but it sorts by host
         contacted = results['contacted']
         sorted_hosts = contacted.keys()
         sorted_hosts.sort()
@@ -227,22 +269,16 @@ class __main__():
                 print line
             print ''
     elif args.action == 'delete':
-        if not args.uuid:
-            print 'No UUID specified. Specify a UUID or use -h for help.'
-            sys.exit(1)
+        check_for_uuid()
         uuid = args.uuid
         delete_it = delete_vm(uuid)
         if delete_it:
             print 'Deleted %s from %s' % (uuid, delete_it)
     elif args.action == 'power-on':
-        if not args.uuid:
-            print 'No UUID specified. Specify a UUID or use -h for help.'
-            sys.exit(1)
+        check_for_uuid()
         uuid = args.uuid
         start_it = poweron(uuid)
     elif args.action == 'power-off':
-        if not args.uuid:
-            print 'No UUID specified. Specify a UUID or use -h for help.'
-            sys.exit(1)
+        check_for_uuid()
         uuid = args.uuid
         stop_it = poweroff(uuid)
