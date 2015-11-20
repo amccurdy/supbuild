@@ -13,6 +13,7 @@ parser.add_argument('-v','--vmtype',type=str, help='rm424, rm425, cent6, cent7')
 parser.add_argument('-u','--uuid',type=str, help='uuid of the VM to be actioned; get this from running a \'list\'')
 args = parser.parse_args()
 
+remote_user='root'
 #hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
 vmtypes = ['rm424', 'rm425', 'cent6', 'cent7']
 templatemap = {
@@ -38,7 +39,8 @@ def get_memory_utilization():
     cmd = 'xentop -b -i1 | awk \'{print $6}\''
     task = runner.Runner(
         module_name='shell',
-        module_args=cmd
+        module_args=cmd,
+        remote_user=remote_user
     )
     results = task.run()
     contacted = results['contacted']
@@ -58,7 +60,8 @@ def list_vms():
     cmd = 'xe vm-list params=name-label,uuid,power-state,networks | grep -B1 -A2 %s' % (user)
     task = runner.Runner(
         module_name='shell',
-        module_args=cmd
+        module_args=cmd,
+        remote_user=remote_user
     )
     results = task.run()
     return results
@@ -68,7 +71,8 @@ def list_vms_all():
     cmd = 'xe vm-list params=name-label,uuid,power-state,networks | grep -B1 -A2 "name-label"'
     task = runner.Runner(
         module_name='shell',
-        module_args=cmd
+        module_args=cmd,
+        remote_user=remote_user
     )
     results = task.run()
     return results
@@ -92,7 +96,8 @@ def build_vm(host, vmtype, vmname):
     task = runner.Runner(
         module_name='shell',
         module_args=cmd,
-        run_hosts=[host]
+        run_hosts=[host],
+        remote_user=remote_user
     )
     results = task.run()
 
@@ -101,7 +106,8 @@ def fetch_vm_uid(host, vmname):
     task = runner.Runner(
         module_name='shell',
         module_args=cmd,
-        run_hosts=[host]
+        run_hosts=[host],
+        remote_user=remote_user
     )
     results = task.run()
     uuid_dirty = results['contacted'][host]['stdout']
@@ -112,7 +118,8 @@ def poweron(uuid):
     cmd = 'xe vm-start vm=%s' % (uuid)
     task = runner.Runner(
         module_name='shell',
-        module_args=cmd
+        module_args=cmd,
+        remote_user=remote_user
     )
     results = task.run()
     messages = results['contacted']
@@ -124,7 +131,8 @@ def poweroff(uuid):
     cmd = 'xe vm-shutdown --force vm=%s' % (uuid)
     task = runner.Runner(
         module_name='shell',
-        module_args=cmd
+        module_args=cmd,
+        remote_user=remote_user
     )
     results = task.run()
     messages = results['contacted']
@@ -136,7 +144,8 @@ def delete_vm(uuid):
     cmd = 'xe vm-uninstall --force vm=%s' % (uuid)
     task = runner.Runner(
         module_name='shell',
-        module_args=cmd
+        module_args=cmd,
+        remote_user=remote_user
     )
     results = task.run()
     messages = results['contacted']
@@ -149,7 +158,8 @@ def get_ip(host, uuid):
     task = runner.Runner(
         module_name='shell',
         module_args=cmd,
-        run_hosts=[host]
+        run_hosts=[host],
+        remote_user=remote_user
     )
     results = task.run()
     ip_dirty = results['contacted'][host]['stdout']
@@ -212,9 +222,10 @@ class __main__():
             stdout = contacted[host]['stdout']
             if len(stdout) == 0:
                 stdout = ' - None\n'
-            print '\nHost: %s' % (host)
+            print 'Host: %s' % (host)
             for line in stdout.split('\n'):
                 print line
+            print ''
     elif args.action == 'delete':
         if not args.uuid:
             print 'No UUID specified. Specify a UUID or use -h for help.'
