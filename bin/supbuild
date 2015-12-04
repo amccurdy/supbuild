@@ -130,7 +130,7 @@ def build_vm(host, vmtype, vmname):
         remote_user=remote_user
     )
     results = task.run()
-    returl results
+    return results
 
 def fetch_vm_uid(host, vmname):
     '''
