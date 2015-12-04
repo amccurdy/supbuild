@@ -25,8 +25,8 @@ templatemap = {
         'cent7': '25b456c9-bd55-9268-5db9-548c6f243b7f'
     },
     'supxen3.zenoss.loc': {
-        'rm424': '9b768e47-0b86-baaa-502f-f94f7fe65d92',
-        'rm425': '30c5fdf6-60b7-a3dc-d5e0-c61760b1a704',
+        'rm424': '30c5fdf6-60b7-a3dc-d5e0-c61760b1a704',
+        'rm425': '9b768e47-0b86-baaa-502f-f94f7fe65d92',
         'cent6': '8336b007-5ff2-10ce-74cd-72e1ad9db4d7',
         'cent7': '384037f4-ff88-b0c5-43e4-23464dc7cbac'
     }
@@ -106,6 +106,8 @@ def test_elect_target_host():
     Returns the name of the VM host with the most free memory
     '''
     util = get_memory_utilization()
+    if 'supxen1.zenoss.loc' in util.keys():
+        del(util['supxen1.zenoss.loc'])
     election = sorted(util.items(), key=itemgetter(1))
     winner = election[0][0]
     return winner
