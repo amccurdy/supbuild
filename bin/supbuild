@@ -3,8 +3,8 @@ import argparse
 import sys
 import getpass
 import time
-from operator import itemgetter
 
+from operator import itemgetter
 from ansible import runner
 
 parser = argparse.ArgumentParser()
@@ -81,7 +81,6 @@ def list_vms_all():
     '''
     Returns a run-result of VMs on all hosts
     '''
-    user = get_user()
     cmd = 'xe vm-list params=name-label,uuid,power-state,networks | grep -B1 -A2 "name-label"'
     task = runner.Runner(
         module_name='shell',
@@ -131,6 +130,7 @@ def build_vm(host, vmtype, vmname):
         remote_user=remote_user
     )
     results = task.run()
+    returl results
 
 def fetch_vm_uid(host, vmname):
     '''
