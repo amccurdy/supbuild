@@ -221,6 +221,10 @@ def get_uuid():
     else:
         return args.uuid
 
+def fail_uuid():
+    print 'Something went wrong. Do you have the right uuid?'
+    sys.exit(1)
+
 class __main__():
     if args.action == 'mem':
         mem_util = get_memory_utilization()
@@ -296,21 +300,18 @@ class __main__():
         if delete_it:
             print 'Deleted %s from %s' % (uuid, delete_it)
         else:
-            print 'Something went wrong. Do you have the right uuid?'
-            sys.exit(1)
+            fail_uuid()
     elif args.action == 'power-on':
         uuid = get_uuid()
         start_it = poweron(uuid)
         if start_it:
             print 'Powered on %s on %s' % (uuid, start_it)
         else:
-            print 'Something went wrong. Do you have the right uuid?'
-            sys.exit(1)
+            fail_uuid()
     elif args.action == 'power-off':
         uuid = get_uuid()
         stop_it = poweroff(uuid)
         if stop_it:
             print 'Powered off %s on %s' % (uuid, stop_it)
         else:
-            print 'Something went wrong. Do you have the right uuid?'
-            sys.exit(1)
+            fail_uuid()
