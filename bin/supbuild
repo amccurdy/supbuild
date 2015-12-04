@@ -315,3 +315,6 @@ class __main__():
             print 'Powered off %s on %s' % (uuid, stop_it)
         else:
             fail_uuid()
+    else:
+        print 'Invalid argument specified: %s -- try %s -h' % (args.action, sys.argv[0])
+        sys.exit(1)
