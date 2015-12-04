@@ -15,20 +15,22 @@ args = parser.parse_args()
 
 remote_user='root'
 #hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
-vmtypes = ['rm424', 'rm425', 'cent6', 'cent7']
+vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', '508poc']
 templatemap = {
     'supxen1.zenoss.loc': {},
     'supxen2.zenoss.loc': {
         'rm424': 'aa9ad0c5-e6c5-9b17-480f-990e64786507',
         'rm425': '242a4a92-15a0-6018-3b7c-e19352da361e',
         'cent6': '6173583a-3950-a00c-00b1-1dbd2dbece55',
-        'cent7': '25b456c9-bd55-9268-5db9-548c6f243b7f'
+        'cent7': '25b456c9-bd55-9268-5db9-548c6f243b7f',
+        '508poc': ''
     },
     'supxen3.zenoss.loc': {
         'rm424': '30c5fdf6-60b7-a3dc-d5e0-c61760b1a704',
         'rm425': '9b768e47-0b86-baaa-502f-f94f7fe65d92',
         'cent6': '8336b007-5ff2-10ce-74cd-72e1ad9db4d7',
-        'cent7': '384037f4-ff88-b0c5-43e4-23464dc7cbac'
+        'cent7': '384037f4-ff88-b0c5-43e4-23464dc7cbac',
+        '508poc': ''
     }
 }
 
@@ -144,6 +146,8 @@ def fetch_vm_uid(host, vmname):
     results = task.run()
     uuid_dirty = results['contacted'][host]['stdout']
     uuid_clean = uuid_dirty.replace('\n','')
+    if not len(uuid_clean) > 0:
+       uuid_clean = None
     return uuid_clean
 
 def poweron(uuid):
@@ -247,8 +251,10 @@ class __main__():
             host = elect_target_host()
             print 'Using %s to create %s' % (host, vmname)
             build_vm(host, vmtype, vmname)
-            print 'VM Created, grabbing uuid so we can power it on.'
             vm_uuid = fetch_vm_uid(host, vmname)
+            if not vm_uuid:
+                print 'VM not created. This shouldn\'t happen. Contact build maintainer for help.'
+                sys.exit(1)
             start_it = poweron(vm_uuid)
             if start_it: 
                 print 'Successfully started %s on %s. Waiting for IP address' % (vmname, start_it)
