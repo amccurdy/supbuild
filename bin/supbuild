@@ -10,7 +10,8 @@ from ansible import runner
 parser = argparse.ArgumentParser()
 parser.add_argument('action', help='build, list, list-all, delete, power-on, power-off')
 parser.add_argument('-v','--vmtype',type=str, help='Used in conjunction with "build". Pick one: rm424, rm425, cent6, cent7')
-parser.add_argument('-u','--uuid',type=str, help='uuid of the VM to be actioned; get this from running a \'list\'')
+parser.add_argument('-u','--uuid',type=str, help='UUID of the VM to be actioned; get this from running a \'list\'')
+parser.add_argument('-l','--label',type=str, help='Label for a VM name. Allows you to slightly customize the name of your VMs. Limited to 8 characters.')
 args = parser.parse_args()
 
 remote_user='root'
@@ -30,7 +31,7 @@ templatemap = {
         'rm425': '9b768e47-0b86-baaa-502f-f94f7fe65d92',
         'cent6': '8336b007-5ff2-10ce-74cd-72e1ad9db4d7',
         'cent7': '384037f4-ff88-b0c5-43e4-23464dc7cbac',
-        '508poc': ''
+        '508poc': 'bf613042-a261-9811-fff0-7ea12f3b6b00'
     }
 }
 
@@ -245,13 +246,20 @@ class __main__():
             print 'Unrecognized vmtype: %s. Specify a valid vmtype or use -h for help.' % (args.vmtype)
             sys.exit(1)
         else:
+            if args.label and len(args.label) < 9:
+                label = args.label
+            if args.label and len(args.label) > 8:
+                print 'Error! Label is limited to 8 characters. Please shorten your label and try again.'
+                sys.exit(1)
+            if not args.label:
+                label = 'ansible'
             # getting data to build the hostname
             user = get_user()
             vmtype = args.vmtype
             user = get_user()
             ts = time.strftime('%m/%d_%H:%M')
-            # this hostname will look something like: amccurdy-rm425-ansible-11/20_12:34
-            vmname = '%s-%s-ansible-%s' % (user, vmtype, ts)
+            # this hostname will look something like: amccurdy-rm425-<LABEL>-11/20_12:34
+            vmname = '%s-%s-%s-%s' % (user, vmtype, label, ts)
             host = elect_target_host()
             print 'Using %s to create %s' % (host, vmname)
             build_vm(host, vmtype, vmname)
