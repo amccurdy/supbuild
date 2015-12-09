@@ -8,12 +8,17 @@ from operator import itemgetter
 from ansible import runner
 
 parser = argparse.ArgumentParser()
-parser.add_argument('action', help='build, list, list-all, delete, power-on, power-off')
-parser.add_argument('-v','--vmtype',type=str, help='Used in conjunction with "build". Pick one: rm424, rm425, cent6, cent7')
-parser.add_argument('-u','--uuid',type=str, help='UUID of the VM to be actioned; get this from running a \'list\'')
-parser.add_argument('-l','--label',type=str, help='Label for a VM name. Allows you to slightly customize the name of your VMs. Limited to 8 characters.')
+parser.add_argument('action', help='build, list, list-all, delete, power-on, '\
+    'power-off')
+parser.add_argument('-v','--vmtype',type=str, help='Used in conjunction with  '\
+    '"build". Pick one: rm424, rm425, cent6, cent7')
+parser.add_argument('-u','--uuid',type=str, help='UUID of the VM to be  '\
+    'actioned; get this from running a \'list\'')
+parser.add_argument('-l','--label',type=str, help='Label for a VM name. Allows '\
+    'you to slightly customize the name of your VMs. Limited to 8 characters.')
 args = parser.parse_args()
 
+supbuild_owner = 'Adam McCurdy, amccurdy@zenoss.com'
 remote_user='root'
 #hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
 vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', '508poc']
@@ -66,10 +71,12 @@ def get_memory_utilization():
 
 def list_vms():
     '''
-    Returns a run-result of VMs containing the name of the currently logged-in user.
+    Returns a run-result of VMs containing the name of the currently logged-in 
+    user.
     '''
     user = get_user()
-    cmd = 'xe vm-list params=name-label,uuid,power-state,networks | grep -B1 -A2 %s' % (user)
+    cmd = 'xe vm-list params=name-label,uuid,power-state,networks | '\
+        'grep -B1 -A2 %s' % (user)
     task = runner.Runner(
         module_name='shell',
         module_args=cmd,
@@ -82,7 +89,8 @@ def list_vms_all():
     '''
     Returns a run-result of VMs on all hosts
     '''
-    cmd = 'xe vm-list params=name-label,uuid,power-state,networks | grep -B1 -A2 "name-label"'
+    cmd = 'xe vm-list params=name-label,uuid,power-state,networks | '\
+        'grep -B1 -A2 "name-label"'
     task = runner.Runner(
         module_name='shell',
         module_args=cmd,
@@ -137,7 +145,8 @@ def fetch_vm_uid(host, vmname):
     '''
     Returns the UUID of a VM when fed a host and vmname
     '''
-    cmd = 'xe vm-list name-label=\'%s\' params=uuid |  sed  \'s/uuid ( RO)    : //\'' % (vmname)
+    cmd = 'xe vm-list name-label=\'%s\' params=uuid | '\
+        'sed  \'s/uuid ( RO)    : //\'' % (vmname)
     task = runner.Runner(
         module_name='shell',
         module_args=cmd,
@@ -153,7 +162,8 @@ def fetch_vm_uid(host, vmname):
 
 def poweron(uuid):
     '''
-    Tries to poweron a machine on all hosts. Returns the host where the poweron succeeded. 
+    Tries to poweron a machine on all hosts. Returns the host where the poweron 
+    succeeded. 
     '''
     cmd = 'xe vm-start vm=%s' % (uuid)
     task = runner.Runner(
@@ -169,7 +179,8 @@ def poweron(uuid):
 
 def poweroff(uuid):
     '''
-    Tries to poweroff a machine on all hosts. Returns the host where the poweroff succeded.
+    Tries to poweroff a machine on all hosts. Returns the host where the 
+    poweroff succeded.
     '''
     cmd = 'xe vm-shutdown --force vm=%s' % (uuid)
     task = runner.Runner(
@@ -185,7 +196,8 @@ def poweroff(uuid):
 
 def delete_vm(uuid):
     '''
-    Tries to delete a machine on all hosts. Returns the host where the delete succeeded.
+    Tries to delete a machine on all hosts. Returns the host where the delete 
+    succeeded.
     '''
     cmd = 'xe vm-uninstall --force vm=%s' % (uuid)
     task = runner.Runner(
@@ -203,7 +215,8 @@ def get_ip(host, uuid):
     '''
     Returns the IP address (string) of a machine when given a host and UUID
     '''
-    cmd = 'xe vm-list uuid=\'%s\' params=networks | awk \'{print $5}\' | sed s/\;// | head -n 1' % (uuid)
+    cmd = 'xe vm-list uuid=\'%s\' params=networks | awk \'{print $5}\' | '\
+        'sed s/\;// | head -n 1' % (uuid)
     task = runner.Runner(
         module_name='shell',
         module_args=cmd,
@@ -229,7 +242,8 @@ def fail_uuid():
 class __main__():
     if args.action == 'mem':
         mem_util = get_memory_utilization()
-        # the way this is done is admittedly silly, but it puts the results in order based on the host
+        # The way this is done is admittedly silly, but it puts the results 
+        # in order based on the host
         sorted_hosts = mem_util.keys()
         sorted_hosts.sort()
         print 'Host: % memory utilization'
@@ -243,13 +257,15 @@ class __main__():
             print 'No vmtype specified. Specify a vmtype or use -h for help.'
             sys.exit(1)
         elif args.vmtype not in vmtypes:
-            print 'Unrecognized vmtype: %s. Specify a valid vmtype or use -h for help.' % (args.vmtype)
+            print 'Unrecognized vmtype: %s. Specify a valid vmtype or use '\
+                '-h for help.' % (args.vmtype)
             sys.exit(1)
         else:
             if args.label and len(args.label) < 9:
                 label = args.label
             if args.label and len(args.label) > 8:
-                print 'Error! Label is limited to 8 characters. Please shorten your label and try again.'
+                print 'Error! Label is limited to 8 characters. Please shorten '\
+                    'your label and try again.'
                 sys.exit(1)
             if not args.label:
                 label = 'ansible'
@@ -258,20 +274,24 @@ class __main__():
             vmtype = args.vmtype
             user = get_user()
             ts = time.strftime('%m/%d_%H:%M')
-            # this hostname will look something like: amccurdy-rm425-<LABEL>-11/20_12:34
+            # this hostname will look something like this:
+            # amccurdy-rm425-<LABEL>-11/20_12:34
             vmname = '%s-%s-%s-%s' % (user, vmtype, label, ts)
             host = elect_target_host()
             print 'Using %s to create %s' % (host, vmname)
             build_vm(host, vmtype, vmname)
             vm_uuid = fetch_vm_uid(host, vmname)
             if not vm_uuid:
-                print 'VM not created. This shouldn\'t happen. Contact build maintainer for help.'
+                print 'VM not created. This shouldn\'t happen. Contact '\
+                    '%s for help.' % (supbuild_owner)
                 sys.exit(1)
             start_it = poweron(vm_uuid)
             if start_it: 
-                print 'Successfully started %s on %s. Waiting for IP address' % (vmname, start_it)
+                print 'Successfully started %s on %s. Waiting for IP '\
+                    'address' % (vmname, start_it)
             else:
-                print 'VM created but didn\'t start for some reason. Try to power it on manually.'
+                print 'VM created but didn\'t start for some reason. Try to '\
+                    'power it on manually.'
             time.sleep(60)
             new_ip = get_ip(host, vm_uuid)
             if new_ip:
@@ -283,14 +303,16 @@ class __main__():
                 if new_ip: 
                     print 'IP address: %s' % (new_ip)
                 else: 
-                    print 'Couldn\'t get an IP. Try waiting for a minute or two and then checking back'
+                    print 'Couldn\'t get an IP. Try waiting for a minute or '\
+                        'two and then checking back'
     elif args.action in ['list','list-all']:
         # fetch results for whichever list we're getting
         if args.action == 'list':
             results = list_vms()
         else: 
             results = list_vms_all()
-        # format the results and print them out, again - silly way of doing it, but it sorts by host
+        # format the results and print them out, again - silly way of doing it, 
+        # but at least this way it sorts by host
         contacted = results['contacted']
         sorted_hosts = contacted.keys()
         sorted_hosts.sort()
@@ -324,5 +346,6 @@ class __main__():
         else:
             fail_uuid()
     else:
-        print 'Invalid argument specified: %s -- try %s -h' % (args.action, sys.argv[0])
+        print 'Invalid argument specified: %s -- try %s -h' % \
+            (args.action, sys.argv[0])
         sys.exit(1)
