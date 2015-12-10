@@ -3,6 +3,7 @@ import argparse
 import sys
 import getpass
 import time
+import re
 
 from operator import itemgetter
 from ansible import runner
@@ -23,7 +24,13 @@ remote_user='root'
 #hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
 vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', '508poc']
 templatemap = {
-    'supxen1.zenoss.loc': {},
+    'supxen1.zenoss.loc': {
+        'rm424': '',
+        'rm425': 'be57ff1f-1d4f-7a67-e740-160ba4e2e0de',
+        'cent6': '',
+        'cent7': '',
+        '508poc': ''
+    },
     'supxen2.zenoss.loc': {
         'rm424': 'aa9ad0c5-e6c5-9b17-480f-990e64786507',
         'rm425': '242a4a92-15a0-6018-3b7c-e19352da361e',
@@ -261,14 +268,20 @@ class __main__():
                 '-h for help.' % (args.vmtype)
             sys.exit(1)
         else:
-            if args.label and len(args.label) < 9:
-                label = args.label
-            if args.label and len(args.label) > 8:
-                print 'Error! Label is limited to 8 characters. Please shorten '\
-                    'your label and try again.'
-                sys.exit(1)
-            if not args.label:
+            if args.label:
+                if len(args.label) > 8:
+                    print 'Error! Label must be be between 1 and 8 '\
+                        'characters long and contain only alphabetical '\
+                        'characters.'
+                    sys.exit(0)
+                else: 
+                    label = args.label
+            else:
                 label = 'ansible'
+            if not re.match('^[a-z]*$', label):
+                print 'Error! Label must be between 1 and 8 characters long '\
+                    'and contain only alphabetical characters.'
+                sys.exit(1)
             # getting data to build the hostname
             user = get_user()
             vmtype = args.vmtype
