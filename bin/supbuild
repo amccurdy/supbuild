@@ -111,9 +111,6 @@ def elect_target_host():
     Returns the name of the VM host with the most free memory
     '''
     util = get_memory_utilization()
-    # temporarily removing supxen1 from the mix
-    if 'supxen1.zenoss.loc' in util.keys():
-        del(util['supxen1.zenoss.loc'])
     election = sorted(util.items(), key=itemgetter(1))
     winner = election[0][0]
     return winner
@@ -123,8 +120,6 @@ def test_elect_target_host():
     Returns the name of the VM host with the most free memory
     '''
     util = get_memory_utilization()
-    if 'supxen1.zenoss.loc' in util.keys():
-        del(util['supxen1.zenoss.loc'])
     election = sorted(util.items(), key=itemgetter(1))
     winner = election[0][0]
     return winner
@@ -359,6 +354,6 @@ class __main__():
         else:
             fail_uuid()
     else:
-        print 'Invalid argument specified: %s -- try %s -h' % \
-            (args.action, sys.argv[0])
+        print 'Invalid argument specified: %s -- try running "%s -h"' % \
+            (args.action, sys.argv[0].replace('/opt/supbuild/bin/',''))
         sys.exit(1)
