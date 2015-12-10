@@ -115,15 +115,6 @@ def elect_target_host():
     winner = election[0][0]
     return winner
 
-def test_elect_target_host():
-    '''
-    Returns the name of the VM host with the most free memory
-    '''
-    util = get_memory_utilization()
-    election = sorted(util.items(), key=itemgetter(1))
-    winner = election[0][0]
-    return winner
-
 def build_vm(host, vmtype, vmname):
     '''
     Returns a run-result of VM creation
@@ -252,7 +243,7 @@ class __main__():
         for key in sorted_hosts:
             print '%s: %s' % (key,mem_util[key])
     elif args.action == 'elect':
-        winner = test_elect_target_host()
+        winner = elect_target_host()
         print 'Winner: %s' % winner
     elif args.action == 'build':
         if not args.vmtype:
