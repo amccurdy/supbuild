@@ -25,10 +25,10 @@ remote_user='root'
 vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', '508poc']
 templatemap = {
     'supxen1.zenoss.loc': {
-        'rm424': '',
+        'rm424': '8e1e75e0-5cb3-c2b4-ab56-f287bc44c350',
         'rm425': 'be57ff1f-1d4f-7a67-e740-160ba4e2e0de',
-        'cent6': '',
-        'cent7': '',
+        'cent6': 'f719b7dd-4ce5-0ed2-b884-fcd852715c08',
+        'cent7': 'ff4d46ab-5178-1ec7-f9f0-46fbd055ff28',
         '508poc': ''
     },
     'supxen2.zenoss.loc': {
