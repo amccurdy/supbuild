@@ -29,14 +29,14 @@ templatemap = {
         'rm425': 'be57ff1f-1d4f-7a67-e740-160ba4e2e0de',
         'cent6': 'f719b7dd-4ce5-0ed2-b884-fcd852715c08',
         'cent7': 'ff4d46ab-5178-1ec7-f9f0-46fbd055ff28',
-        '508poc': ''
+        '508poc': '03889be8-5346-89f7-0b07-15042f2be274'
     },
     'supxen2.zenoss.loc': {
         'rm424': 'aa9ad0c5-e6c5-9b17-480f-990e64786507',
         'rm425': '242a4a92-15a0-6018-3b7c-e19352da361e',
         'cent6': '6173583a-3950-a00c-00b1-1dbd2dbece55',
         'cent7': '25b456c9-bd55-9268-5db9-548c6f243b7f',
-        '508poc': ''
+        '508poc': '6db30d17-8a01-5527-bbf5-5b15538057a7'
     },
     'supxen3.zenoss.loc': {
         'rm424': '30c5fdf6-60b7-a3dc-d5e0-c61760b1a704',
@@ -278,6 +278,10 @@ class __main__():
             vmname = '%s-%s-%s-%s' % (user, vmtype, label, ts)
             host = elect_target_host()
             print 'Using %s to create %s' % (host, vmname)
+            if host == 'supxen1.zenoss.loc':
+                print 'NOTE: supxen1 has been a bit slow lately due to '\
+                    'disk contention. Give it some extra time. Your ' \
+                    'virtual machine will be created...eventually.'
             build_vm(host, vmtype, vmname)
             vm_uuid = fetch_vm_uid(host, vmname)
             if not vm_uuid:
