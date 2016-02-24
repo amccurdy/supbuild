@@ -232,6 +232,11 @@ def fail_uuid():
     print 'Something went wrong. Do you have the right uuid?'
     sys.exit(1)
 
+def fail_label():
+    print 'Error! Label must be between 1 and 8 characters long and '\
+        'contain only lowercase alphabetical characters.'
+    sys.exit(1)
+
 class __main__():
     if args.action == 'mem':
         mem_util = get_memory_utilization()
@@ -256,18 +261,13 @@ class __main__():
         else:
             if args.label:
                 if len(args.label) > 8:
-                    print 'Error! Label must be be between 1 and 8 '\
-                        'characters long and contain only alphabetical '\
-                        'characters.'
-                    sys.exit(0)
+                    fail_label()
                 else: 
                     label = args.label
             else:
                 label = 'ansible'
             if not re.match('^[a-z]*$', label):
-                print 'Error! Label must be between 1 and 8 characters long '\
-                    'and contain only alphabetical characters.'
-                sys.exit(1)
+                fail_label()
             # getting data to build the hostname
             user = get_user()
             vmtype = args.vmtype
@@ -278,10 +278,6 @@ class __main__():
             vmname = '%s-%s-%s-%s' % (user, vmtype, label, ts)
             host = elect_target_host()
             print 'Using %s to create %s' % (host, vmname)
-            if host == 'supxen1.zenoss.loc':
-                print 'NOTE: supxen1 has been a bit slow lately due to '\
-                    'disk contention. Give it some extra time. Your ' \
-                    'virtual machine will be created...eventually.'
             build_vm(host, vmtype, vmname)
             vm_uuid = fetch_vm_uid(host, vmname)
             if not vm_uuid:
