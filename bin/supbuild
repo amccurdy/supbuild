@@ -17,8 +17,9 @@ parser.add_argument('-u','--uuid',type=str, help='UUID of the VM to be  '\
     'actioned; get this from running a \'list\'')
 parser.add_argument('-l','--label',type=str, help='Label for a VM name. Allows '\
     'you to slightly customize the name of your VMs. Limited to 8 characters.')
-parser.add_argument('-H','--host',type=str, help='name of the host from which '\
-    'to gather the list of virtual machines')
+parser.add_argument('-H','--host',type=str, help='Used solely in conjunction '\
+    'with \'list\' and \'list-all\'. Name of the host from which to gather the '\
+    'list of virtual machines')
 args = parser.parse_args()
 
 supbuild_owner = 'Adam McCurdy, amccurdy@zenoss.com'
@@ -326,6 +327,8 @@ class __main__():
         if args.action == 'list':
             if args.host in hosts:
                 results = list_vms(args.host)
+            elif args.host:
+                fail_host()
             else:
                 results = list_vms('all')
         elif args.action == 'list-all': 
