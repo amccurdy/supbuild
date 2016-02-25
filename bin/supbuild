@@ -252,7 +252,7 @@ def fail_label():
 
 def fail_host():
     print 'Error! Invalid host specified. Please use one of the '\
-        'following hosts: %s' % (hosts)
+        'following hosts: %s' % (str(hosts).replace('[','').replace(']',''))
     sys.exit(1)
 
 class __main__():
