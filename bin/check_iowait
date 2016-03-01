@@ -1,0 +1,2 @@
+#!/bin/bash 
+ansible xenservers -m shell -a "iostat | grep -A 1 iowait"
