@@ -349,7 +349,10 @@ class __main__():
                 stdout = ' - None'
             print 'Host: %s' % (host)
             for line in stdout.split('\n'):
-                print line
+                if line.startswith('--'):
+                    print ''
+                else: 
+                    print line
             print ''
     elif args.action == 'delete':
         uuid = get_uuid()
