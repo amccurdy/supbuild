@@ -16,7 +16,7 @@ parser.add_argument('-v','--vmtype',type=str, help='Used in conjunction with  '\
 parser.add_argument('-u','--uuid',type=str, help='UUID of the VM to be  '\
     'actioned; get this from running a \'list\'')
 parser.add_argument('-l','--label',type=str, help='Label for a VM name. Allows '\
-    'you to slightly customize the name of your VMs. Limited to 8 characters.')
+    'you to slightly customize the name of your VMs. Limited to 12 characters.')
 parser.add_argument('-H','--host',type=str, help='Used solely in conjunction '\
     'with \'list\' and \'list-all\'. Name of the host from which to gather the '\
     'list of virtual machines')
@@ -48,6 +48,17 @@ templatemap = {
     }
 }
 
+def get_tool_name():
+    '''
+    Making it easier to change the name of the tool if I decide that's ever
+    something smart to do.
+    '''
+    try:
+        tool_name = sys.argv[0].split('/')[-1]
+    except KeyError:
+        tool_name = 'supbuild'
+    return tool_name
+
 def get_user():
     '''
     Return currently logged-in user
@@ -62,6 +73,7 @@ def get_memory_utilization():
     task = runner.Runner(
         module_name='shell',
         module_args=cmd,
+        run_hosts=hosts,
         remote_user=remote_user
     )
     results = task.run()
@@ -243,7 +255,7 @@ def get_uuid():
 
 def fail_start():
     print 'VM failed to start. Try running \"%s mem\" to check overall '\
-        'host memory utilization.' % (sys.argv[0].split('/')[-1])
+        'host memory utilization.' % (get_tool_name())
     sys.exit(1)
 
 def fail_uuid():
@@ -251,8 +263,8 @@ def fail_uuid():
     sys.exit(1)
 
 def fail_label():
-    print 'Error! Label must be between 1 and 8 characters long and '\
-        'contain only lowercase alphabetical characters.'
+    print 'Error! Label must be between 1 and 12 characters long and '\
+        'contain only alphanumeric characters.'
     sys.exit(1)
 
 def fail_host():
@@ -263,7 +275,8 @@ def fail_host():
 def fail_ip():
     print '\nError! Couldn\'t get an IP address after %s seconds. '\
         'Try waiting for a minute or two and running a \"%s list\"'\
-        % (ip_timeout, sys.argv[0].split('/')[-1])
+        % (ip_timeout, get_tool_name())
+    sys.exit(1)
 
 class __main__():
     if args.action == 'mem':
@@ -288,13 +301,13 @@ class __main__():
             sys.exit(1)
         else:
             if args.label:
-                if len(args.label) > 8:
+                if len(args.label) > 12:
                     fail_label()
                 else: 
                     label = args.label
             else:
-                label = 'ansible'
-            if not re.match('^[a-z]*$', label):
+                label = get_tool_name()
+            if not re.match('^[A-Za-z0-9]*$', label):
                 fail_label()
             # getting data to build the hostname
             user = get_user()
@@ -340,6 +353,8 @@ class __main__():
                 print '\nIP address: %s' % (new_ip)
             else: 
                 fail_ip()
+    # checking for list actions, looking for host filter, and grabbing/parsing
+    # lists of VMs
     elif args.action in ['list','list-all']:
         if args.host and args.host in hosts:
             host = args.host
@@ -390,5 +405,5 @@ class __main__():
             fail_uuid()
     else:
         print 'Invalid argument specified: %s -- try running "%s -h"' % \
-            (args.action, sys.argv[0].replace('/opt/supbuild/bin/',''))
+            (args.action, get_tool_name())
         sys.exit(1)
