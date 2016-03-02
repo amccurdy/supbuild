@@ -26,6 +26,7 @@ supbuild_owner = 'Adam McCurdy, amccurdy@zenoss.com'
 remote_user='root'
 hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
 vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', '508poc']
+ip_timeout = 120
 templatemap = {
     'supxen1.zenoss.loc': {
         'rm424': '8e1e75e0-5cb3-c2b4-ab56-f287bc44c350',
@@ -238,6 +239,11 @@ def get_uuid():
     else:
         return args.uuid
 
+def fail_start():
+    print 'VM failed to start. Try running \"%s mem\" to check overall '\
+        'host memory utilization.' % (sys.argv[0].split('/')[-1])
+    sys.exit(1)
+
 def fail_uuid():
     print 'Something went wrong. Do you have the right uuid?'
     sys.exit(1)
@@ -251,6 +257,11 @@ def fail_host():
     print 'Error! Invalid host specified. Please use one of the '\
         'following hosts: %s' % (str(hosts).replace('[','').replace(']',''))
     sys.exit(1)
+
+def fail_ip():
+    print '\nError! Couldn\'t get an IP address after %s seconds. '\
+        'Try waiting for a minute or two and running a \"%s list\"'\
+        % (ip_timeout, sys.argv[0].split('/')[-1])
 
 class __main__():
     if args.action == 'mem':
@@ -301,24 +312,25 @@ class __main__():
                 sys.exit(1)
             start_it = poweron(vm_uuid)
             if start_it: 
-                print 'Successfully started %s on %s. Waiting for IP '\
-                    'address' % (vmname, start_it)
+                print 'Successfully started %s on %s' % (vmname, start_it)
             else:
-                print 'VM created but didn\'t start for some reason. Try to '\
-                    'power it on manually.'
-            time.sleep(60)
-            new_ip = get_ip(host, vm_uuid)
+               fail_start()
+            sys.stdout.write('Waiting on IP address')
+            ip_timer = 0
+            new_ip = False
+            while not new_ip:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+                ipaddr = get_ip(host, vm_uuid)
+                new_ip = ipaddr if ipaddr.startswith('10') else False
+                time.sleep(5)
+                ip_timer += 5
+                if ip_timer >= ip_timeout:
+                    break
             if new_ip:
-                print 'IP address: %s' % (new_ip)
+                print '\nIP address: %s' % (new_ip)
             else: 
-                print 'No IP yet. Waiting 60 more seconds.'
-                time.sleep(60)
-                new_ip = get_ip(host, vm_uuid)
-                if new_ip: 
-                    print 'IP address: %s' % (new_ip)
-                else: 
-                    print 'Couldn\'t get an IP. Try waiting for a minute or '\
-                        'two and then checking back'
+                fail_ip()
     elif args.action in ['list','list-all']:
         # fetch results for whichever list we're getting
         if args.action == 'list':
