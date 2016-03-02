@@ -80,7 +80,8 @@ def get_memory_utilization():
 def list_vms(host):
     '''
     Returns a run-result of VMs containing the name of the currently logged-in 
-    user.
+    user. Optionally uses the -H or --host filter to return results from only
+    one host.
     '''
     if host == 'all':
         host = hosts
@@ -100,7 +101,8 @@ def list_vms(host):
 
 def list_vms_all(host):
     '''
-    Returns a run-result of VMs on all hosts
+    Returns a run-result of all VMs on either all hosts, or a host that was
+    specified via the -H or --host filter.
     '''
     if host == 'all':
         host = hosts
@@ -315,6 +317,12 @@ class __main__():
                 print 'Successfully started %s on %s' % (vmname, start_it)
             else:
                fail_start()
+            # Here we're using sys.stdout to essentially print on the same
+            # line. We try to get an IP, if we don't get one, we sleep for
+            # 5 seconds and try again. The reason that it checks for the 10
+            # at the start of the ipaddr string is that sometimes the get
+            # ip method will return the string "in" when the target VM
+            # doesn't have a valid IP address.
             sys.stdout.write('Waiting on IP address')
             ip_timer = 0
             new_ip = False
@@ -323,7 +331,8 @@ class __main__():
                 sys.stdout.flush()
                 ipaddr = get_ip(host, vm_uuid)
                 new_ip = ipaddr if ipaddr.startswith('10') else False
-                time.sleep(5)
+                if not new_ip:
+                    time.sleep(5)
                 ip_timer += 5
                 if ip_timer >= ip_timeout:
                     break
@@ -332,21 +341,16 @@ class __main__():
             else: 
                 fail_ip()
     elif args.action in ['list','list-all']:
-        # fetch results for whichever list we're getting
+        if args.host and args.host in hosts:
+            host = args.host
+        elif args.host and args.host not in hosts:
+            fail_host()
+        elif not args.host:
+            host = 'all'
         if args.action == 'list':
-            if args.host in hosts:
-                results = list_vms(args.host)
-            elif args.host:
-                fail_host()
-            else:
-                results = list_vms('all')
-        elif args.action == 'list-all': 
-            if args.host in hosts:
-                results = list_vms_all(args.host)
-            elif args.host:
-                fail_host()
-            else:
-                results = list_vms_all('all')
+            results = list_vms(host)
+        elif args.action == 'list-all':
+            results = list_vms_all(host)
         # format the results and print them out, again - silly way of doing it, 
         # but at least this way it sorts by host
         contacted = results['contacted']
