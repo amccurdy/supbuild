@@ -10,7 +10,7 @@ from ansible import runner
 
 parser = argparse.ArgumentParser()
 parser.add_argument('action', help='build, list, list-all, delete, power-on, '\
-    'power-off')
+    'power-off, mem, elect, util')
 parser.add_argument('-v','--vmtype',type=str, help='Used in conjunction with  '\
     '"build". Pick one: rm424, rm425, cent6, cent7')
 parser.add_argument('-u','--uuid',type=str, help='UUID of the VM to be  '\
@@ -120,8 +120,8 @@ def list_vms_all(host):
         host = hosts
     else:
         host = [host]
-    cmd = 'xe vm-list params=name-label,uuid,power-state,networks | '\
-        'grep -B1 -A2 "name-label"'
+    cmd = 'xe vm-list params=name-label,uuid,power-state,networks,VCPUs-number,memory-actual | '\
+        'grep -B1 -A4 "name-label"'
     task = runner.Runner(
         module_name='shell',
         module_args=cmd,
@@ -382,6 +382,49 @@ class __main__():
                 else: 
                     print line
             print ''
+    elif args.action == 'util':
+        results = list_vms_all('all')
+        contacted = results['contacted']
+        sorted_hosts = contacted.keys()
+        sorted_hosts.sort()
+        user_utilization = {}
+        for host in sorted_hosts:
+            stdout = contacted[host]['stdout']
+            if len(stdout) == 0:
+                pass
+            per_vm = stdout.split('uuid')
+            for item in per_vm:
+               vm_name = None
+               memory_actual = None
+               power_state = None
+               vm_owner = None
+               if len(item) > 3:
+                   per_line = item.split('\n')
+                   for line in per_line:
+                       line = line.replace(' ','')
+                       if 'name-label' in line:
+                           vm_name = line.split(':')[1]
+                       if 'memory-actual' in line:
+                           memory_actual = int(line.split(':')[1])
+                       if 'power-state' in line:
+                           power_state = line.split(':')[1]
+                       if vm_name:
+                           if '.zenoss.loc' not in vm_name and '-' in vm_name:
+                               vm_owner = vm_name.split('-')[0]
+               if vm_owner and memory_actual and power_state == 'running':
+                   if vm_owner not in user_utilization.keys():
+                       user_utilization[vm_owner] = memory_actual
+                   else:
+                       user_utilization[vm_owner] += memory_actual
+        users = user_utilization.keys()
+        users.sort()
+        print 'User          :  Memory Utilization (GB)'
+        width=14
+        for user in users:
+            utilization = user_utilization[user]/1024/1024/1024
+            while len(user) < width:
+               user += ' '
+            print '%s:  %s' % (user, utilization)
     elif args.action == 'delete':
         uuid = get_uuid()
         delete_it = delete_vm(uuid)
