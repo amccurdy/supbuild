@@ -159,7 +159,8 @@ def get_util():
                        power_state = line.split(':')[1]
                    if vm_name:
                        if '.zenoss.loc' not in vm_name and '-' in vm_name:
-                           vm_owner = vm_name.split('-')[0]
+                           if 'buildTemplate' not in vm_name: 
+                               vm_owner = vm_name.split('-')[0]
            if vm_owner and memory_actual and power_state == 'running':
                if vm_owner not in user_utilization.keys():
                    user_utilization[vm_owner] = memory_actual
@@ -353,7 +354,13 @@ class __main__():
             # this hostname will look something like this:
             # amccurdy-rm425-<LABEL>-11/20_12:34
             vmname = '%s-%s-%s-%s' % (user, vmtype, label, ts)
-            host = elect_target_host()
+            if args.host:
+                if args.host in hosts:
+                    host = args.host
+                else:
+                    fail_host()
+            else:
+                host = elect_target_host()
             print 'Using %s to create %s' % (host, vmname)
             build_vm(host, vmtype, vmname)
             vm_uuid = fetch_vm_uid(host, vmname)
