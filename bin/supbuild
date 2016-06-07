@@ -8,9 +8,11 @@ import re
 from operator import itemgetter
 from ansible import runner
 
-parser = argparse.ArgumentParser()
-parser.add_argument('action', help='build, list, list-all, delete, power-on, '\
-    'power-off, mem, elect, util')
+parser = argparse.ArgumentParser(description='Tool to create and tear-down '\
+    'virtual machines for support engineers. Use the \'examples\' option for '\
+    'usage examples')
+parser.add_argument('action', help='examples, build, list, list-all, delete, '\
+    'power-on, power-off, mem, elect, util')
 parser.add_argument('-v','--vmtype',type=str, help='Used in conjunction with  '\
     '"build". Pick one: rm424, rm425, cent6, cent7')
 parser.add_argument('-u','--uuid',type=str, help='UUID of the VM to be  '\
@@ -25,14 +27,15 @@ args = parser.parse_args()
 supbuild_owner = 'Adam McCurdy, amccurdy@zenoss.com'
 remote_user='root'
 hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
-vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', '508poc']
+vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', 'rm511']
 ip_timeout = 120
 templatemap = {
     'supxen1.zenoss.loc': {
         'rm424': '8e1e75e0-5cb3-c2b4-ab56-f287bc44c350',
         'rm425': 'be57ff1f-1d4f-7a67-e740-160ba4e2e0de',
         'cent6': 'f719b7dd-4ce5-0ed2-b884-fcd852715c08',
-        'cent7': '8fac1411-11b9-bb18-5297-fac68c29d0fe'
+        'cent7': '8fac1411-11b9-bb18-5297-fac68c29d0fe',
+        'rm511': '17956322-afd9-8079-bf6b-c0f93c83d9dd'
     },
     'supxen2.zenoss.loc': {
         'rm424': 'aa9ad0c5-e6c5-9b17-480f-990e64786507',
@@ -290,6 +293,16 @@ def get_uuid():
     else:
         return args.uuid
 
+def examples():
+    toolname = get_tool_name()
+    print 'List your VMs:\n $ %s list' % (toolname)
+    print 'List all VMs:\n $ %s list-all' % (toolname)
+    print 'Create a 4.2.5 vm:\n $ %s build -v rm425' % (toolname)
+    print 'Power-off a machine:\n $ %s power-off -u <UUID>' % (toolname)
+    print 'Power-on a machine:\n $ %s power-on -u <UUID>' % (toolname)
+    print 'Delete a machine:\n $ %s delete -u <UUID>' % (toolname)
+    sys.exit(0)
+
 def fail_start():
     print 'VM failed to start. Try running \"%s mem\" to check overall '\
         'host memory utilization.' % (get_tool_name())
@@ -454,6 +467,8 @@ class __main__():
             print 'Powered off %s on %s' % (uuid, stop_it)
         else:
             fail_uuid()
+    elif args.action in ['examples','example']:
+        examples()
     else:
         print 'Invalid argument specified: %s -- try running "%s -h"' % \
             (args.action, get_tool_name())
