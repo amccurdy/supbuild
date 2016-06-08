@@ -219,6 +219,26 @@ def fetch_vm_uid(host, vmname):
        uuid_clean = None
     return uuid_clean
 
+def fetch_vm_name(uuid):
+    '''
+    Returns the VM name-label if given a uuid
+    '''
+    cmd = 'xe vm-list uuid=\'%s\' params=name-label | '\
+        'sed  \'s/name-label ( RW)    : //\'' % (uuid)
+    task = runner.Runner(
+        module_name='shell',
+        module_args=cmd,
+        remote_user=remote_user
+    )
+    results = task.run()
+    name = None
+    for k,v in results['contacted'].iteritems():
+        name_dirty = v['stdout']
+        name_clean = name_dirty.replace('\n','')
+        if len(name_clean) > 0:
+            return name_clean
+    return 'Unknown'
+
 def poweron(uuid):
     '''
     Tries to poweron a machine on all hosts. Returns the host where the poweron 
@@ -457,33 +477,40 @@ class __main__():
             print '%-15s:  %-15s' % (user, utilization)
     elif args.action == 'delete':
         uuid = get_uuid()
+        vm_name = fetch_vm_name(uuid)
         delete_it = delete_vm(uuid)
         if delete_it:
             print 'Deleted %s from %s' % (uuid, delete_it)
-            log_action(user, args.action, uuid, True)
+            log_action(user, args.action, vm_name, True)
         else:
-            log_action(user, args.action, uuid, False)
+            log_action(user, args.action, vm_name, False)
             fail_uuid()
     elif args.action == 'power-on':
         uuid = get_uuid()
+        vm_name=fetch_vm_name(uuid)
         start_it = poweron(uuid)
         if start_it:
             print 'Powered on %s on %s' % (uuid, start_it)
-            log_action(user, args.action, uuid, True)
+            log_action(user, args.action, vm_name, True)
         else:
-            log_action(user, args.action, uuid, False)
+            log_action(user, args.action, vm_name, False)
             fail_uuid()
     elif args.action == 'power-off':
         uuid = get_uuid()
+        vm_name=fetch_vm_name(uuid)
         stop_it = poweroff(uuid)
         if stop_it:
             print 'Powered off %s on %s' % (uuid, stop_it)
-            log_action(user, args.action, uuid, True)
+            log_action(user, args.action, vm_name, True)
         else:
             fail_uuid()
-            log_action(user, args.action, uuid, False)
+            log_action(user, args.action, vm_name, False)
     elif args.action in ['examples','example']:
         examples()
+    elif args.action == 'name':
+        uuid = get_uuid()
+        vm_name = fetch_vm_name(uuid)
+        print vm_name
     else:
         print 'Invalid argument specified: %s -- try running "%s -h"' % \
             (args.action, get_tool_name())
