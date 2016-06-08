@@ -5,6 +5,7 @@ import getpass
 import time
 import re
 
+from time import gmtime, strftime
 from operator import itemgetter
 from ansible import runner
 
@@ -303,6 +304,13 @@ def examples():
     print 'Delete a machine:\n $ %s delete -u <UUID>' % (toolname)
     sys.exit(0)
 
+def log_action(username, action, vmname, success):
+    time = strftime('%d %b %Y %H:%M:%S', gmtime())
+    line = '%s - %s: %s - %s. Success: %s\n' % (time, username, action, 
+        vmname, success)
+    with open('/opt/supbuild/log/supbuild.log','a') as logfile:
+        logfile.write(line)
+
 def fail_start():
     print 'VM failed to start. Try running \"%s mem\" to check overall '\
         'host memory utilization.' % (get_tool_name())
@@ -329,6 +337,7 @@ def fail_ip():
     sys.exit(1)
 
 class __main__():
+    user = get_user()
     if args.action == 'mem':
         mem_util = get_memory_utilization()
         # The way this is done is admittedly silly, but it puts the results 
@@ -360,9 +369,7 @@ class __main__():
             if not re.match('^[A-Za-z0-9]*$', label):
                 fail_label()
             # getting data to build the hostname
-            user = get_user()
             vmtype = args.vmtype
-            user = get_user()
             ts = time.strftime('%m/%d_%H:%M')
             # this hostname will look something like this:
             # amccurdy-rm425-<LABEL>-11/20_12:34
@@ -380,7 +387,9 @@ class __main__():
             if not vm_uuid:
                 print 'VM not created. This shouldn\'t happen. Contact '\
                     '%s for help.' % (supbuild_owner)
+                log_action(user, args.action, vmname, False)
                 sys.exit(1)
+            log_action(user, args.action, vmname, True)
             start_it = poweron(vm_uuid)
             if start_it: 
                 print 'Successfully started %s on %s' % (vmname, start_it)
@@ -451,22 +460,28 @@ class __main__():
         delete_it = delete_vm(uuid)
         if delete_it:
             print 'Deleted %s from %s' % (uuid, delete_it)
+            log_action(user, args.action, uuid, True)
         else:
+            log_action(user, args.action, uuid, False)
             fail_uuid()
     elif args.action == 'power-on':
         uuid = get_uuid()
         start_it = poweron(uuid)
         if start_it:
             print 'Powered on %s on %s' % (uuid, start_it)
+            log_action(user, args.action, uuid, True)
         else:
+            log_action(user, args.action, uuid, False)
             fail_uuid()
     elif args.action == 'power-off':
         uuid = get_uuid()
         stop_it = poweroff(uuid)
         if stop_it:
             print 'Powered off %s on %s' % (uuid, stop_it)
+            log_action(user, args.action, uuid, True)
         else:
             fail_uuid()
+            log_action(user, args.action, uuid, False)
     elif args.action in ['examples','example']:
         examples()
     else:
