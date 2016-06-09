@@ -529,7 +529,7 @@ class __main__():
         vm_name = fetch_vm_name(uuid)
         delete_it = delete_vm(uuid)
         if delete_it:
-            print 'Deleted %s from %s' % (uuid, delete_it)
+            print 'Deleted %s (%s) from %s' % (vm_name, uuid, delete_it)
             log_action(user, args.action, vm_name, True)
         else:
             log_action(user, args.action, vm_name, False)
@@ -539,7 +539,7 @@ class __main__():
         vm_name=fetch_vm_name(uuid)
         start_it = poweron(uuid)
         if start_it:
-            print 'Powered on %s on %s' % (uuid, start_it)
+            print 'Powered on %s (%s) on %s' % (vm_name, uuid, start_it)
             log_action(user, args.action, vm_name, True)
         else:
             log_action(user, args.action, vm_name, False)
@@ -549,7 +549,7 @@ class __main__():
         vm_name=fetch_vm_name(uuid)
         stop_it = poweroff(uuid)
         if stop_it:
-            print 'Powered off %s on %s' % (uuid, stop_it)
+            print 'Powered off %s (%s) on %s' % (vm_name, uuid, stop_it)
             log_action(user, args.action, vm_name, True)
         else:
             fail_uuid()
