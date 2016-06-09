@@ -12,8 +12,8 @@ from ansible import runner
 parser = argparse.ArgumentParser(description='Tool to create and tear-down '\
     'virtual machines for support engineers. Use the \'examples\' option for '\
     'usage examples')
-parser.add_argument('action', help='examples, build, list, list-all, delete, '\
-    'power-on, power-off, mem, elect, util')
+parser.add_argument('action', help='Pick one of the following actions: examples, '\
+    'build, list, list-all, delete, power-on, power-off, mem, elect, util, log')
 parser.add_argument('-v','--vmtype',type=str, help='Used in conjunction with  '\
     '"build". Pick one: rm424, rm425, cent6, cent7')
 parser.add_argument('-u','--uuid',type=str, help='UUID of the VM to be  '\
@@ -26,6 +26,7 @@ parser.add_argument('-H','--host',type=str, help='Used solely in conjunction '\
 args = parser.parse_args()
 
 supbuild_owner = 'Adam McCurdy, amccurdy@zenoss.com'
+logfile_path = '/opt/supbuild/log/supbuild.log'
 remote_user='root'
 hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
 vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', 'rm511']
@@ -316,20 +317,38 @@ def get_uuid():
 
 def examples():
     toolname = get_tool_name()
+    print 'Basic options: '
     print 'List your VMs:\n $ %s list' % (toolname)
     print 'List all VMs:\n $ %s list-all' % (toolname)
     print 'Create a 4.2.5 vm:\n $ %s build -v rm425' % (toolname)
     print 'Power-off a machine:\n $ %s power-off -u <UUID>' % (toolname)
     print 'Power-on a machine:\n $ %s power-on -u <UUID>' % (toolname)
     print 'Delete a machine:\n $ %s delete -u <UUID>' % (toolname)
+    print '\n Advanced and/or Troubleshooting Options:'
+    print 'Display breakdown of who is using how much memory:\n $ %s ' \
+        'util' % (toolname)
+    print 'Display memory utilization on hosts:\n $ %s util' % (toolname)
+    print 'Perform a build election:\n $ %s elect' % (toolname)
+    print 'Display your VMs on supxen1.zenoss.loc\n $ %s list -h '\
+        'supxen1.zenoss.loc' % (toolname)
+    print 'Build a cent6 VM on supxen1.zenoss.loc\n $ %s build -v cent6 -h '\
+        'supxen1.zenoss.loc' % (toolname)
+    print 'Build a cent6 VM on supxen1.zenoss.loc'
+
     sys.exit(0)
 
 def log_action(username, action, vmname, success):
     time = strftime('%d %b %Y %H:%M:%S', gmtime())
     line = '%s - %s: %s - %s. Success: %s\n' % (time, username, action, 
         vmname, success)
-    with open('/opt/supbuild/log/supbuild.log','a') as logfile:
+    with open(logfile_path,'a') as logfile:
         logfile.write(line)
+
+def display_log():
+    logfile = open(logfile_path, 'r')
+    for line in logfile.readlines():
+        print line.replace('\n','')
+    sys.exit(0)
 
 def fail_start():
     print 'VM failed to start. Try running \"%s mem\" to check overall '\
@@ -511,6 +530,8 @@ class __main__():
         uuid = get_uuid()
         vm_name = fetch_vm_name(uuid)
         print vm_name
+    elif args.action == 'log':
+        display_log()
     else:
         print 'Invalid argument specified: %s -- try running "%s -h"' % \
             (args.action, get_tool_name())
