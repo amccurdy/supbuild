@@ -137,6 +137,9 @@ def list_vms_all(host):
     return results
 
 def get_util():
+    '''
+    Prints out a list of users and their memory utilization in GB
+    '''
     results = list_vms_all('all')
     contacted = results['contacted']
     sorted_hosts = contacted.keys()
@@ -309,6 +312,9 @@ def get_ip(host, uuid):
     return ip_clean
 
 def get_uuid():
+    '''
+    Grab the UUID from args or puke if we don't get one
+    '''
     if not args.uuid:
         print 'No UUID specified. Specify a UUID or run -h for help.'
         sys.exit(1)
@@ -316,6 +322,9 @@ def get_uuid():
         return args.uuid
 
 def examples():
+    '''
+    Print a list of examples on how to use this tool.
+    '''
     toolname = get_tool_name()
     print 'Basic options: '
     print 'List your VMs:\n $ %s list' % (toolname)
@@ -338,6 +347,9 @@ def examples():
     sys.exit(0)
 
 def log_action(username, action, vmname, success):
+    '''
+    Simple logging mechanism. Writes out to the variable "logfile_path"
+    '''
     time = strftime('%d %b %Y %H:%M:%S', gmtime())
     line = '%s - %s: %s - %s. Success: %s\n' % (time, username, action, 
         vmname, success)
@@ -345,31 +357,49 @@ def log_action(username, action, vmname, success):
         logfile.write(line)
 
 def display_log():
+    '''
+    Display the log file
+    '''
     logfile = open(logfile_path, 'r')
     for line in logfile.readlines():
         print line.replace('\n','')
     sys.exit(0)
 
 def fail_start():
+    '''
+    Exit used when failing to start a VM
+    '''
     print 'VM failed to start. Try running \"%s mem\" to check overall '\
         'host memory utilization.' % (get_tool_name())
     sys.exit(1)
 
 def fail_uuid():
+    '''
+    Exit used if there's a problem with the UUID
+    '''
     print 'Something went wrong. Do you have the right uuid?'
     sys.exit(1)
 
 def fail_label():
+    '''
+    Exit used if there's a problem with the name-label
+    '''
     print 'Error! Label must be between 1 and 12 characters long and '\
         'contain only alphanumeric characters.'
     sys.exit(1)
 
 def fail_host():
+    '''
+    Exit used if there's a problem with the host specified
+    '''
     print 'Error! Invalid host specified. Please use one of the '\
         'following hosts: %s' % (str(hosts).replace('[','').replace(']',''))
     sys.exit(1)
 
 def fail_ip():
+    '''
+    Exit used if we don't get an IP address in a reasonable amount of time'
+    '''
     print '\nError! Couldn\'t get an IP address after %s seconds. '\
         'Try waiting for a minute or two and running a \"%s list\"'\
         % (ip_timeout, get_tool_name())
