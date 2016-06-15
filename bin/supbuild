@@ -181,6 +181,8 @@ def elect_target_host():
     Returns the name of the VM host with the most free memory
     '''
     util = get_memory_utilization()
+    # temporarily remove supxen3 from the mix
+    # del(util['supxen3.zenoss.loc'])
     election = sorted(util.items(), key=itemgetter(1))
     winner = election[0][0]
     return winner
@@ -338,9 +340,9 @@ def examples():
         'util' % (toolname)
     print 'Display memory utilization on hosts:\n $ %s util' % (toolname)
     print 'Perform a build election:\n $ %s elect' % (toolname)
-    print 'Display your VMs on supxen1.zenoss.loc\n $ %s list -h '\
+    print 'Display your VMs on supxen1.zenoss.loc\n $ %s list -H '\
         'supxen1.zenoss.loc' % (toolname)
-    print 'Build a cent6 VM on supxen1.zenoss.loc\n $ %s build -v cent6 -h '\
+    print 'Build a cent6 VM on supxen1.zenoss.loc\n $ %s build -v cent6 -H '\
         'supxen1.zenoss.loc' % (toolname)
     print 'Build a cent6 VM on supxen1.zenoss.loc'
 
