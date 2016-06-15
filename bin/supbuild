@@ -363,7 +363,7 @@ def display_log():
     Display the log file
     '''
     logfile = open(logfile_path, 'r')
-    for line in logfile.readlines():
+    for line in logfile.readlines()[-100:]:
         print line.replace('\n','')
     sys.exit(0)
 
