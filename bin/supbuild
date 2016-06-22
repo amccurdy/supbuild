@@ -8,6 +8,7 @@ import re
 from time import gmtime, strftime
 from operator import itemgetter
 from ansible import runner
+from ansible import inventory
 
 parser = argparse.ArgumentParser(description='Tool to create and tear-down '\
     'virtual machines for support engineers. Use the \'examples\' option for '\
@@ -70,18 +71,25 @@ def get_user():
     '''
     return getpass.getuser()
 
+def run_task(cmd, run_hosts=''):
+    '''
+    Creates an ansible runner task and returns the result of calling run() 
+    on that task object.
+    '''
+    task = runner.Runner(
+        module_name='shell',
+        module_args=cmd,
+        remote_user=remote_user
+    )
+    results = task.run()
+    return results
+
 def get_memory_utilization():
     '''
     Return dict with keys of hosts and values of memory utilization in percent
     '''
     cmd = 'xentop -b -i1 | awk \'{print $6}\''
-    task = runner.Runner(
-        module_name='shell',
-        module_args=cmd,
-        run_hosts=hosts,
-        remote_user=remote_user
-    )
-    results = task.run()
+    results = run_task(cmd, run_hosts=hosts)
     contacted = results['contacted']
     mem_util = {}
     for host, output in contacted.iteritems():
@@ -96,24 +104,18 @@ def get_memory_utilization():
 
 def list_vms(host):
     '''
-    Returns a run-result of VMs containing the name of the currently logged-in 
+    Returns a run-result of VMs containing the name of the currently logged-in
     user. Optionally uses the -H or --host filter to return results from only
     one host.
     '''
     if host == 'all':
         host = hosts
-    else: 
+    else:
         host = [host]
     user = get_user()
     cmd = 'xe vm-list params=name-label,uuid,power-state,networks | '\
         'grep -B1 -A2 %s' % (user)
-    task = runner.Runner(
-        module_name='shell',
-        module_args=cmd,
-        run_hosts=host,
-        remote_user=remote_user
-    )
-    results = task.run()
+    results = run_task(cmd, run_hosts=[host])
     return results
 
 def list_vms_all(host):
@@ -127,13 +129,7 @@ def list_vms_all(host):
         host = [host]
     cmd = 'xe vm-list params=name-label,uuid,power-state,networks,VCPUs-number,memory-actual | '\
         'grep -B1 -A4 "name-label"'
-    task = runner.Runner(
-        module_name='shell',
-        module_args=cmd,
-        run_hosts=host,
-        remote_user=remote_user
-    )
-    results = task.run()
+    results = run_task(cmd, run_hosts=[host])
     return results
 
 def get_util():
@@ -167,7 +163,7 @@ def get_util():
                        power_state = line.split(':')[1]
                    if vm_name:
                        if '.zenoss.loc' not in vm_name and '-' in vm_name:
-                           if 'buildTemplate' not in vm_name: 
+                           if 'buildTemplate' not in vm_name:
                                vm_owner = vm_name.split('-')[0]
            if vm_owner and memory_actual and power_state == 'running':
                if vm_owner not in user_utilization.keys():
@@ -175,7 +171,7 @@ def get_util():
                else:
                    user_utilization[vm_owner] += memory_actual
     return user_utilization
- 
+
 def elect_target_host():
     '''
     Returns the name of the VM host with the most free memory
@@ -191,19 +187,13 @@ def build_vm(host, vmtype, vmname):
     '''
     Returns a run-result of VM creation
     '''
-    try: 
+    try:
         source_uuid = templatemap[host][vmtype]
     except KeyError as e:
         print 'Unsupported host or vmtype: %s, %s' % (host, vmtype)
         raise(e)
     cmd = 'xe vm-copy vm=%s new-name-label=%s' % (source_uuid, vmname)
-    task = runner.Runner(
-        module_name='shell',
-        module_args=cmd,
-        run_hosts=[host],
-        remote_user=remote_user
-    )
-    results = task.run()
+    results = run_task(cmd, run_hosts=[host])
     return results
 
 def fetch_vm_uid(host, vmname):
@@ -212,13 +202,7 @@ def fetch_vm_uid(host, vmname):
     '''
     cmd = 'xe vm-list name-label=\'%s\' params=uuid | '\
         'sed  \'s/uuid ( RO)    : //\'' % (vmname)
-    task = runner.Runner(
-        module_name='shell',
-        module_args=cmd,
-        run_hosts=[host],
-        remote_user=remote_user
-    )
-    results = task.run()
+    results = run_task(cmd, run_hosts=[host])
     uuid_dirty = results['contacted'][host]['stdout']
     uuid_clean = uuid_dirty.replace('\n','')
     if not len(uuid_clean) > 0:
@@ -231,12 +215,7 @@ def fetch_vm_name(uuid):
     '''
     cmd = 'xe vm-list uuid=\'%s\' params=name-label | '\
         'sed  \'s/name-label ( RW)    : //\'' % (uuid)
-    task = runner.Runner(
-        module_name='shell',
-        module_args=cmd,
-        remote_user=remote_user
-    )
-    results = task.run()
+    results = run_task(cmd, run_hosts='')
     name = None
     for k,v in results['contacted'].iteritems():
         name_dirty = v['stdout']
@@ -247,16 +226,11 @@ def fetch_vm_name(uuid):
 
 def poweron(uuid):
     '''
-    Tries to poweron a machine on all hosts. Returns the host where the poweron 
-    succeeded. 
+    Tries to poweron a machine on all hosts. Returns the host where the poweron
+    succeeded.
     '''
     cmd = 'xe vm-start vm=%s' % (uuid)
-    task = runner.Runner(
-        module_name='shell',
-        module_args=cmd,
-        remote_user=remote_user
-    )
-    results = task.run()
+    results = run_task(cmd, run_hosts='')
     messages = results['contacted']
     for k,v in messages.iteritems():
        if len(v['stderr']) == 0:
@@ -264,16 +238,11 @@ def poweron(uuid):
 
 def poweroff(uuid):
     '''
-    Tries to poweroff a machine on all hosts. Returns the host where the 
+    Tries to poweroff a machine on all hosts. Returns the host where the
     poweroff succeded.
     '''
     cmd = 'xe vm-shutdown --force vm=%s' % (uuid)
-    task = runner.Runner(
-        module_name='shell',
-        module_args=cmd,
-        remote_user=remote_user
-    )
-    results = task.run()
+    results = run_task(cmd, run_hosts='')
     messages = results['contacted']
     for k,v in messages.iteritems():
        if len(v['stderr']) == 0:
@@ -281,16 +250,11 @@ def poweroff(uuid):
 
 def delete_vm(uuid):
     '''
-    Tries to delete a machine on all hosts. Returns the host where the delete 
+    Tries to delete a machine on all hosts. Returns the host where the delete
     succeeded.
     '''
     cmd = 'xe vm-uninstall --force vm=%s' % (uuid)
-    task = runner.Runner(
-        module_name='shell',
-        module_args=cmd,
-        remote_user=remote_user
-    )
-    results = task.run()
+    results = run_task(cmd)
     messages = results['contacted']
     for k,v in messages.iteritems():
        if 'destroyed' in v['stdout'].lower():
@@ -302,13 +266,7 @@ def get_ip(host, uuid):
     '''
     cmd = 'xe vm-list uuid=\'%s\' params=networks | awk \'{print $5}\' | '\
         'sed s/\;// | head -n 1' % (uuid)
-    task = runner.Runner(
-        module_name='shell',
-        module_args=cmd,
-        run_hosts=[host],
-        remote_user=remote_user
-    )
-    results = task.run()
+    results = run_task(cmd, run_hosts=[host])
     ip_dirty = results['contacted'][host]['stdout']
     ip_clean = ip_dirty.replace('\n','')
     return ip_clean
@@ -353,7 +311,7 @@ def log_action(username, action, vmname, success):
     Simple logging mechanism. Writes out to the variable "logfile_path"
     '''
     time = strftime('%d %b %Y %H:%M:%S', gmtime())
-    line = '%s - %s: %s - %s. Success: %s\n' % (time, username, action, 
+    line = '%s - %s: %s - %s. Success: %s\n' % (time, username, action,
         vmname, success)
     with open(logfile_path,'a') as logfile:
         logfile.write(line)
@@ -411,7 +369,7 @@ class __main__():
     user = get_user()
     if args.action == 'mem':
         mem_util = get_memory_utilization()
-        # The way this is done is admittedly silly, but it puts the results 
+        # The way this is done is admittedly silly, but it puts the results
         # in order based on the host
         sorted_hosts = mem_util.keys()
         sorted_hosts.sort()
@@ -433,7 +391,7 @@ class __main__():
             if args.label:
                 if len(args.label) > 12:
                     fail_label()
-                else: 
+                else:
                     label = args.label
             else:
                 label = get_tool_name()
@@ -462,7 +420,7 @@ class __main__():
                 sys.exit(1)
             log_action(user, args.action, vmname, True)
             start_it = poweron(vm_uuid)
-            if start_it: 
+            if start_it:
                 print 'Successfully started %s on %s' % (vmname, start_it)
             else:
                fail_start()
@@ -487,7 +445,7 @@ class __main__():
                     break
             if new_ip:
                 print '\nIP address: %s' % (new_ip)
-            else: 
+            else:
                 fail_ip()
     # checking for list actions, looking for host filter, and grabbing/parsing
     # lists of VMs
@@ -502,7 +460,7 @@ class __main__():
             results = list_vms(host)
         elif args.action == 'list-all':
             results = list_vms_all(host)
-        # format the results and print them out, again - silly way of doing it, 
+        # format the results and print them out, again - silly way of doing it,
         # but at least this way it sorts by host
         contacted = results['contacted']
         sorted_hosts = contacted.keys()
@@ -515,7 +473,7 @@ class __main__():
             for line in stdout.split('\n'):
                 if line.startswith('--'):
                     print ''
-                else: 
+                else:
                     print line
             print ''
     elif args.action == 'util':
