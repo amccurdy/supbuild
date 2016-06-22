@@ -218,7 +218,6 @@ def fetch_vm_name(uuid):
     cmd = 'xe vm-list uuid=\'%s\' params=name-label | '\
         'sed  \'s/name-label ( RW)    : //\'' % (uuid)
     results = run_task(cmd, run_hosts='')
-    name = None
     for k,v in results['contacted'].iteritems():
         name_dirty = v['stdout']
         name_clean = name_dirty.replace('\n','')
