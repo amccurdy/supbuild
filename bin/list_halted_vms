@@ -1,0 +1,2 @@
+#!/bin/bash
+supbuild list-all | grep -B 1 halted | grep -v halted | grep / | awk '{print $4}' | sort | uniq

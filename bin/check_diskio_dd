@@ -1,0 +1,2 @@
+#!/bin/bash 
+ansible xenservers -m shell -a "dd if=/dev/zero of=/tmp/ddjunk bs=8k count=100k; rm -f /tmp/ddjunk"
