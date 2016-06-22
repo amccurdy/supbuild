@@ -303,7 +303,6 @@ def examples():
     print 'Build a cent6 VM on supxen1.zenoss.loc\n $ %s build -v cent6 -H '\
         'supxen1.zenoss.loc' % (toolname)
     print 'Build a cent6 VM on supxen1.zenoss.loc'
-
     sys.exit(0)
 
 def log_action(username, action, vmname, success):
