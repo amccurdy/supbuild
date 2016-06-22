@@ -30,7 +30,7 @@ supbuild_owner = 'Adam McCurdy, amccurdy@zenoss.com'
 logfile_path = '/opt/supbuild/log/supbuild.log'
 remote_user='root'
 hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
-vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', 'rm511']
+vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', 'ubuntu']
 ip_timeout = 120
 templatemap = {
     'supxen1.zenoss.loc': {
@@ -38,19 +38,21 @@ templatemap = {
         'rm425': 'be57ff1f-1d4f-7a67-e740-160ba4e2e0de',
         'cent6': 'f719b7dd-4ce5-0ed2-b884-fcd852715c08',
         'cent7': '8fac1411-11b9-bb18-5297-fac68c29d0fe',
-        'rm511': '17956322-afd9-8079-bf6b-c0f93c83d9dd'
+        'ubuntu': '2e684156-a838-dfc3-a612-49a680060dde'
     },
     'supxen2.zenoss.loc': {
         'rm424': 'aa9ad0c5-e6c5-9b17-480f-990e64786507',
         'rm425': '242a4a92-15a0-6018-3b7c-e19352da361e',
         'cent6': '6173583a-3950-a00c-00b1-1dbd2dbece55',
-        'cent7': '25b456c9-bd55-9268-5db9-548c6f243b7f'
+        'cent7': '25b456c9-bd55-9268-5db9-548c6f243b7f',
+        'ubuntu': '4e883a39-15b2-4253-34e8-8613e25b5a5b'
     },
     'supxen3.zenoss.loc': {
         'rm424': '30c5fdf6-60b7-a3dc-d5e0-c61760b1a704',
         'rm425': '9b768e47-0b86-baaa-502f-f94f7fe65d92',
         'cent6': '8336b007-5ff2-10ce-74cd-72e1ad9db4d7',
-        'cent7': '384037f4-ff88-b0c5-43e4-23464dc7cbac'
+        'cent7': '384037f4-ff88-b0c5-43e4-23464dc7cbac',
+        'ubuntu': 'bd952f82-f0e6-095b-b22c-9b0eb58180e9'
     }
 }
 
@@ -305,13 +307,13 @@ def examples():
     print 'Build a cent6 VM on supxen1.zenoss.loc'
     sys.exit(0)
 
-def log_action(username, action, vmname, success):
+def log_action(username, action, vmname, host, success):
     '''
     Simple logging mechanism. Writes out to the variable "logfile_path"
     '''
     time = strftime('%d %b %Y %H:%M:%S', gmtime())
-    line = '%s - %s: %s - %s. Success: %s\n' % (time, username, action,
-        vmname, success)
+    line = '%s - %s: %s %s on %s. Success: %s\n' % (time, username, action,
+        vmname, host, success)
     with open(logfile_path,'a') as logfile:
         logfile.write(line)
 
@@ -415,9 +417,9 @@ class __main__():
             if not vm_uuid:
                 print 'VM not created. This shouldn\'t happen. Contact '\
                     '%s for help.' % (supbuild_owner)
-                log_action(user, args.action, vmname, False)
+                log_action(user, args.action, vmname, host, False)
                 sys.exit(1)
-            log_action(user, args.action, vmname, True)
+            log_action(user, args.action, vmname, host, True)
             start_it = poweron(vm_uuid)
             if start_it:
                 print 'Successfully started %s on %s' % (vmname, start_it)
@@ -488,31 +490,37 @@ class __main__():
         vm_name = fetch_vm_name(uuid)
         delete_it = delete_vm(uuid)
         if delete_it:
-            print 'Deleted %s (%s) from %s' % (vm_name, uuid, delete_it)
-            log_action(user, args.action, vm_name, True)
+            host = delete_it
+            print 'Deleted %s (%s) from %s' % (vm_name, uuid, host)
+            log_action(user, args.action, vm_name, host, True)
         else:
-            log_action(user, args.action, vm_name, False)
+            host = 'Unknown'
+            log_action(user, args.action, vm_name, host, False)
             fail_uuid()
     elif args.action == 'power-on':
         uuid = get_uuid()
         vm_name=fetch_vm_name(uuid)
         start_it = poweron(uuid)
         if start_it:
-            print 'Powered on %s (%s) on %s' % (vm_name, uuid, start_it)
-            log_action(user, args.action, vm_name, True)
+            host = start_it
+            print 'Powered on %s (%s) on %s' % (vm_name, uuid, host)
+            log_action(user, args.action, vm_name, host, True)
         else:
-            log_action(user, args.action, vm_name, False)
+            host = 'Unknown'
+            log_action(user, args.action, vm_name, host, False)
             fail_uuid()
     elif args.action == 'power-off':
         uuid = get_uuid()
         vm_name=fetch_vm_name(uuid)
         stop_it = poweroff(uuid)
         if stop_it:
-            print 'Powered off %s (%s) on %s' % (vm_name, uuid, stop_it)
-            log_action(user, args.action, vm_name, True)
+            host = stop_it
+            print 'Powered off %s (%s) on %s' % (vm_name, uuid, host)
+            log_action(user, args.action, vm_name, host, True)
         else:
+            host = 'Unknown'
             fail_uuid()
-            log_action(user, args.action, vm_name, False)
+            log_action(user, args.action, vm_name, host, False)
     elif args.action in ['examples','example']:
         examples()
     elif args.action == 'name':
