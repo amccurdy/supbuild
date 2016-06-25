@@ -317,7 +317,7 @@ def fail_config(vmtype):
     Exit used when failing to get a source VM uid
     '''
     print 'Failed to find source uid for %s Make sure you have a valid  '\
-        'vmtype specified.'
+        'vmtype specified.' % (vmtype)
     sys.exit(1)
 
 def fail_start():
