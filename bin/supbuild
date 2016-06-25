@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import argparse
+import ConfigParser
+import os
 import sys
 import getpass
 import time
@@ -16,7 +18,7 @@ parser = argparse.ArgumentParser(description='Tool to create and tear-down '\
 parser.add_argument('action', help='Pick one of the following actions: examples, '\
     'build, list, list-all, delete, power-on, power-off, mem, elect, util, log')
 parser.add_argument('-v','--vmtype',type=str, help='Used in conjunction with  '\
-    '"build". Pick one: rm424, rm425, cent6, cent7, ubuntu1604')
+    '"build". Pick one: rm424, rm425, cent6, cent7, ubuntu16')
 parser.add_argument('-u','--uuid',type=str, help='UUID of the VM to be  '\
     'actioned; get this from running a \'list\'')
 parser.add_argument('-l','--label',type=str, help='Label for a VM name. Allows '\
@@ -28,36 +30,20 @@ args = parser.parse_args()
 
 supbuild_owner = 'Adam McCurdy, amccurdy@zenoss.com'
 logfile_path = '/opt/supbuild/log/supbuild.log'
+configfile_path = '/opt/supbuild/etc/supbuild.conf'
 remote_user='root'
 hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
 vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', 'ubuntu16']
 ip_timeout = 120
-templatemap = {
-    'supxen1.zenoss.loc': {
-        'rm424': '8e1e75e0-5cb3-c2b4-ab56-f287bc44c350',
-        'rm425': 'be57ff1f-1d4f-7a67-e740-160ba4e2e0de',
-        'cent6': 'f719b7dd-4ce5-0ed2-b884-fcd852715c08',
-        'cent7': '8fac1411-11b9-bb18-5297-fac68c29d0fe',
-        'ubuntu': '2e684156-a838-dfc3-a612-49a680060dde',
-        'ubuntu16': 'c3f8a869-c67a-e86f-0858-4363f1c0bf31'
-    },
-    'supxen2.zenoss.loc': {
-        'rm424': 'aa9ad0c5-e6c5-9b17-480f-990e64786507',
-        'rm425': '242a4a92-15a0-6018-3b7c-e19352da361e',
-        'cent6': '6173583a-3950-a00c-00b1-1dbd2dbece55',
-        'cent7': '25b456c9-bd55-9268-5db9-548c6f243b7f',
-        'ubuntu': '4e883a39-15b2-4253-34e8-8613e25b5a5b',
-        'ubuntu16': '1bb80de7-2651-c4fb-8f8e-82557471c4a3'
-    },
-    'supxen3.zenoss.loc': {
-        'rm424': '30c5fdf6-60b7-a3dc-d5e0-c61760b1a704',
-        'rm425': '9b768e47-0b86-baaa-502f-f94f7fe65d92',
-        'cent6': '8336b007-5ff2-10ce-74cd-72e1ad9db4d7',
-        'cent7': '384037f4-ff88-b0c5-43e4-23464dc7cbac',
-        'ubuntu': 'bd952f82-f0e6-095b-b22c-9b0eb58180e9',
-        'ubuntu16': '0c1c03c6-ac71-a003-279d-5bf06ebeeba2'
-    }
-}
+
+def get_vm_source(host, vmtype):
+    config = ConfigParser.RawConfigParser()
+    config.read(configfile_path)
+    try: 
+        result = config.get(host, vmtype)
+        return result
+    except: 
+        fail_config(vmtype)
 
 def get_tool_name():
     '''
@@ -193,7 +179,7 @@ def build_vm(host, vmtype, vmname):
     Returns a run-result of VM creation
     '''
     try:
-        source_uuid = templatemap[host][vmtype]
+        source_uuid = get_vm_source(host, vmtype)
     except KeyError as e:
         print 'Unsupported host or vmtype: %s, %s' % (host, vmtype)
         raise(e)
@@ -327,6 +313,14 @@ def display_log():
     for line in logfile.readlines()[-100:]:
         print line.replace('\n','')
     sys.exit(0)
+
+def fail_config(vmtype):
+    '''
+    Exit used when failing to get a source VM uid
+    '''
+    print 'Failed to find source uid for %s Make sure you have a valid  '\
+        'vmtype specified.'
+    sys.exit(1)
 
 def fail_start():
     '''
