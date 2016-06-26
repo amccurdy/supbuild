@@ -10,38 +10,42 @@ from time import gmtime, strftime
 from operator import itemgetter
 from ansible import runner
 
-parser = argparse.ArgumentParser(description='Tool to create and tear-down '\
-    'virtual machines for support engineers. Use the \'examples\' option for '\
+parser = argparse.ArgumentParser(description='Tool to create and tear-down '
+    'virtual machines for support engineers. Use the \'examples\' option for '
     'usage examples')
-parser.add_argument('action', help='Pick one of the following actions: examples, '\
-    'build, list, list-all, delete, power-on, power-off, mem, elect, util, log')
-parser.add_argument('-v','--vmtype',type=str, help='Used in conjunction with  '\
-    '"build". Pick one: rm424, rm425, cent6, cent7, ubuntu16')
-parser.add_argument('-u','--uuid',type=str, help='UUID of the VM to be  '\
+parser.add_argument('action', help='Pick one of the following actions: '
+    'examples, build, list, list-all, delete, power-on, power-off, mem, '
+    'elect, util, log')
+parser.add_argument('-v', '--vmtype', type=str, help='Used in conjunction '
+    'with "build". Pick one: rm424, rm425, cent6, cent7, ubuntu16')
+parser.add_argument('-u', '--uuid', type=str, help='UUID of the VM to be  '
     'actioned; get this from running a \'list\'')
-parser.add_argument('-l','--label',type=str, help='Label for a VM name. Allows '\
-    'you to slightly customize the name of your VMs. Limited to 12 characters.')
-parser.add_argument('-H','--host',type=str, help='Used solely in conjunction '\
-    'with \'list\' and \'list-all\'. Name of the host from which to gather the '\
-    'list of virtual machines')
+parser.add_argument('-l', '--label', type=str, help='Label for a VM name. '
+    'Allows you to slightly customize the name of your VMs. Limited to 12 '
+    'characters.')
+parser.add_argument('-H', '--host', type=str, help='Used solely in '
+    'conjunction with \'list\' and \'list-all\'. Name of the host from '
+    'which to gather the list of virtual machines')
 args = parser.parse_args()
 
 supbuild_owner = 'Adam McCurdy, amccurdy@zenoss.com'
 logfile_path = '/opt/supbuild/log/supbuild.log'
 configfile_path = '/opt/supbuild/etc/supbuild.conf'
-remote_user='root'
-hosts = ['supxen1.zenoss.loc','supxen2.zenoss.loc','supxen3.zenoss.loc']
+remote_user = 'root'
+hosts = ['supxen1.zenoss.loc', 'supxen2.zenoss.loc', 'supxen3.zenoss.loc']
 vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', 'ubuntu16']
 ip_timeout = 120
+
 
 def get_vm_source(host, vmtype):
     config = ConfigParser.RawConfigParser()
     config.read(configfile_path)
-    try: 
+    try:
         result = config.get(host, vmtype)
         return result
-    except: 
+    except:
         fail_config(vmtype)
+
 
 def get_tool_name():
     '''
@@ -54,11 +58,13 @@ def get_tool_name():
         tool_name = 'supbuild'
     return tool_name
 
+
 def get_user():
     '''
     Return currently logged-in user
     '''
     return getpass.getuser()
+
 
 def run_task(cmd, run_hosts=''):
     '''
@@ -73,6 +79,7 @@ def run_task(cmd, run_hosts=''):
     results = task.run()
     return results
 
+
 def get_memory_utilization():
     '''
     Return dict with keys of hosts and values of memory utilization in percent
@@ -83,13 +90,14 @@ def get_memory_utilization():
     mem_util = {}
     for host, output in contacted.iteritems():
         stdout = output['stdout']
-        util_nums = stdout.replace('MEM(%)','').split('\n')
+        util_nums = stdout.replace('MEM(%)', '').split('\n')
         tot = 0
         for num in util_nums:
             if len(num) > 0:
                 tot += float(num)
         mem_util[host] = tot
     return mem_util
+
 
 def list_vms(host):
     '''
@@ -107,6 +115,7 @@ def list_vms(host):
     results = run_task(cmd, run_hosts=[host])
     return results
 
+
 def list_vms_all(host):
     '''
     Returns a run-result of all VMs on either all hosts, or a host that was
@@ -116,10 +125,11 @@ def list_vms_all(host):
         host = hosts
     else:
         host = [host]
-    cmd = 'xe vm-list params=name-label,uuid,power-state,networks,VCPUs-number,memory-actual | '\
-        'grep -B1 -A4 "name-label"'
+    cmd = 'xe vm-list params=name-label,uuid,power-state,networks,'\
+        'VCPUs-number,memory-actual | grep -B1 -A4 "name-label"'
     results = run_task(cmd, run_hosts=[host])
     return results
+
 
 def get_util():
     '''
@@ -136,30 +146,31 @@ def get_util():
             pass
         per_vm = stdout.split('uuid')
         for item in per_vm:
-           vm_name = None
-           memory_actual = None
-           power_state = None
-           vm_owner = None
-           if len(item) > 3:
-               per_line = item.split('\n')
-               for line in per_line:
-                   line = line.replace(' ','')
-                   if 'name-label' in line:
-                       vm_name = line.split(':')[1]
-                   if 'memory-actual' in line:
-                       memory_actual = int(line.split(':')[1])
-                   if 'power-state' in line:
-                       power_state = line.split(':')[1]
-                   if vm_name:
-                       if '.zenoss.loc' not in vm_name and '-' in vm_name:
-                           if 'buildTemplate' not in vm_name:
-                               vm_owner = vm_name.split('-')[0]
-           if vm_owner and memory_actual and power_state == 'running':
-               if vm_owner not in user_utilization.keys():
-                   user_utilization[vm_owner] = memory_actual
-               else:
-                   user_utilization[vm_owner] += memory_actual
+            vm_name = None
+            memory_actual = None
+            power_state = None
+            vm_owner = None
+            if len(item) > 3:
+                per_line = item.split('\n')
+                for line in per_line:
+                    line = line.replace(' ', '')
+                    if 'name-label' in line:
+                        vm_name = line.split(':')[1]
+                    if 'memory-actual' in line:
+                        memory_actual = int(line.split(':')[1])
+                    if 'power-state' in line:
+                        power_state = line.split(':')[1]
+                    if vm_name:
+                        if '.zenoss.loc' not in vm_name and '-' in vm_name:
+                            if 'buildTemplate' not in vm_name:
+                                vm_owner = vm_name.split('-')[0]
+            if vm_owner and memory_actual and power_state == 'running':
+                if vm_owner not in user_utilization.keys():
+                    user_utilization[vm_owner] = memory_actual
+                else:
+                    user_utilization[vm_owner] += memory_actual
     return user_utilization
+
 
 def elect_target_host():
     '''
@@ -171,6 +182,7 @@ def elect_target_host():
     election = sorted(util.items(), key=itemgetter(1))
     winner = election[0][0]
     return winner
+
 
 def build_vm(host, vmtype, vmname):
     '''
@@ -185,6 +197,7 @@ def build_vm(host, vmtype, vmname):
     results = run_task(cmd, run_hosts=[host])
     return results
 
+
 def fetch_vm_uid(host, vmname):
     '''
     Returns the UUID of a VM when fed a host and vmname
@@ -193,10 +206,11 @@ def fetch_vm_uid(host, vmname):
         'sed  \'s/uuid ( RO)    : //\'' % (vmname)
     results = run_task(cmd, run_hosts=[host])
     uuid_dirty = results['contacted'][host]['stdout']
-    uuid_clean = uuid_dirty.replace('\n','')
+    uuid_clean = uuid_dirty.replace('\n', '')
     if not len(uuid_clean) > 0:
-       uuid_clean = None
+        uuid_clean = None
     return uuid_clean
+
 
 def fetch_vm_name(uuid):
     '''
@@ -205,12 +219,13 @@ def fetch_vm_name(uuid):
     cmd = 'xe vm-list uuid=\'%s\' params=name-label | '\
         'sed  \'s/name-label ( RW)    : //\'' % (uuid)
     results = run_task(cmd, run_hosts='')
-    for k,v in results['contacted'].iteritems():
+    for k, v in results['contacted'].iteritems():
         name_dirty = v['stdout']
-        name_clean = name_dirty.replace('\n','')
+        name_clean = name_dirty.replace('\n', '')
         if len(name_clean) > 0:
             return name_clean
     return 'Unknown'
+
 
 def poweron(uuid):
     '''
@@ -220,9 +235,10 @@ def poweron(uuid):
     cmd = 'xe vm-start vm=%s' % (uuid)
     results = run_task(cmd, run_hosts='')
     messages = results['contacted']
-    for k,v in messages.iteritems():
-       if len(v['stderr']) == 0:
-           return k
+    for k, v in messages.iteritems():
+        if len(v['stderr']) == 0:
+            return k
+
 
 def poweroff(uuid):
     '''
@@ -232,9 +248,10 @@ def poweroff(uuid):
     cmd = 'xe vm-shutdown --force vm=%s' % (uuid)
     results = run_task(cmd, run_hosts='')
     messages = results['contacted']
-    for k,v in messages.iteritems():
-       if len(v['stderr']) == 0:
-           return k
+    for k, v in messages.iteritems():
+        if len(v['stderr']) == 0:
+            return k
+
 
 def delete_vm(uuid):
     '''
@@ -244,9 +261,10 @@ def delete_vm(uuid):
     cmd = 'xe vm-uninstall --force vm=%s' % (uuid)
     results = run_task(cmd)
     messages = results['contacted']
-    for k,v in messages.iteritems():
-       if 'destroyed' in v['stdout'].lower():
-           return k
+    for k, v in messages.iteritems():
+        if 'destroyed' in v['stdout'].lower():
+            return k
+
 
 def get_ip(host, uuid):
     '''
@@ -256,8 +274,9 @@ def get_ip(host, uuid):
         'sed s/\;// | head -n 1' % (uuid)
     results = run_task(cmd, run_hosts=[host])
     ip_dirty = results['contacted'][host]['stdout']
-    ip_clean = ip_dirty.replace('\n','')
+    ip_clean = ip_dirty.replace('\n', '')
     return ip_clean
+
 
 def get_uuid():
     '''
@@ -268,6 +287,7 @@ def get_uuid():
         sys.exit(1)
     else:
         return args.uuid
+
 
 def examples():
     '''
@@ -293,6 +313,7 @@ def examples():
     print 'Build a cent6 VM on supxen1.zenoss.loc'
     sys.exit(0)
 
+
 def log_action(username, action, vmname, host, success):
     '''
     Simple logging mechanism. Writes out to the variable "logfile_path"
@@ -300,8 +321,9 @@ def log_action(username, action, vmname, host, success):
     time = strftime('%d %b %Y %H:%M:%S', gmtime())
     line = '%s - %s: %s %s on %s. Success: %s\n' % (time, username, action,
         vmname, host, success)
-    with open(logfile_path,'a') as logfile:
+    with open(logfile_path, 'a') as logfile:
         logfile.write(line)
+
 
 def display_log():
     '''
@@ -309,8 +331,9 @@ def display_log():
     '''
     logfile = open(logfile_path, 'r')
     for line in logfile.readlines()[-100:]:
-        print line.replace('\n','')
+        print line.replace('\n', '')
     sys.exit(0)
+
 
 def fail_config(vmtype):
     '''
@@ -320,6 +343,7 @@ def fail_config(vmtype):
         'vmtype specified.' % (vmtype)
     sys.exit(1)
 
+
 def fail_start():
     '''
     Exit used when failing to start a VM
@@ -328,12 +352,14 @@ def fail_start():
         'host memory utilization.' % (get_tool_name())
     sys.exit(1)
 
+
 def fail_uuid():
     '''
     Exit used if there's a problem with the UUID
     '''
     print 'Something went wrong. Do you have the right uuid?'
     sys.exit(1)
+
 
 def fail_label():
     '''
@@ -343,13 +369,15 @@ def fail_label():
         'contain only alphanumeric characters.'
     sys.exit(1)
 
+
 def fail_host():
     '''
     Exit used if there's a problem with the host specified
     '''
     print 'Error! Invalid host specified. Please use one of the '\
-        'following hosts: %s' % (str(hosts).replace('[','').replace(']',''))
+        'following hosts: %s' % (str(hosts).replace('[', '').replace(']', ''))
     sys.exit(1)
+
 
 def fail_ip():
     '''
@@ -359,6 +387,7 @@ def fail_ip():
         'Try waiting for a minute or two and running a \"%s list\"'\
         % (ip_timeout, get_tool_name())
     sys.exit(1)
+
 
 class __main__():
     user = get_user()
@@ -370,7 +399,7 @@ class __main__():
         sorted_hosts.sort()
         print 'Host: % memory utilization'
         for key in sorted_hosts:
-            print '%s: %s' % (key,mem_util[key])
+            print '%s: %s' % (key, mem_util[key])
     elif args.action == 'elect':
         winner = elect_target_host()
         print 'Winner: %s' % winner
@@ -418,7 +447,7 @@ class __main__():
             if start_it:
                 print 'Successfully started %s on %s' % (vmname, start_it)
             else:
-               fail_start()
+                fail_start()
             # Here we're using sys.stdout to essentially print on the same
             # line. We try to get an IP, if we don't get one, we sleep for
             # 5 seconds and try again. The reason that it checks for the 10
@@ -444,7 +473,7 @@ class __main__():
                 fail_ip()
     # checking for list actions, looking for host filter, and grabbing/parsing
     # lists of VMs
-    elif args.action in ['list','list-all']:
+    elif args.action in ['list', 'list-all']:
         if args.host and args.host in hosts:
             host = args.host
         elif args.host and args.host not in hosts:
@@ -493,7 +522,7 @@ class __main__():
             fail_uuid()
     elif args.action == 'power-on':
         uuid = get_uuid()
-        vm_name=fetch_vm_name(uuid)
+        vm_name = fetch_vm_name(uuid)
         start_it = poweron(uuid)
         if start_it:
             host = start_it
@@ -505,7 +534,7 @@ class __main__():
             fail_uuid()
     elif args.action == 'power-off':
         uuid = get_uuid()
-        vm_name=fetch_vm_name(uuid)
+        vm_name = fetch_vm_name(uuid)
         stop_it = poweroff(uuid)
         if stop_it:
             host = stop_it
@@ -515,7 +544,7 @@ class __main__():
             host = 'Unknown'
             fail_uuid()
             log_action(user, args.action, vm_name, host, False)
-    elif args.action in ['examples','example']:
+    elif args.action in ['examples', 'example']:
         examples()
     elif args.action == 'name':
         uuid = get_uuid()
