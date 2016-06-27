@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import argparse
+import argparse as ap
 import ConfigParser
 import sys
 import getpass
@@ -10,22 +10,24 @@ from time import gmtime, strftime
 from operator import itemgetter
 from ansible import runner
 
-parser = argparse.ArgumentParser(description='Tool to create and tear-down '
-    'virtual machines for support engineers. Use the \'examples\' option for '
-    'usage examples')
+parser = ap.ArgumentParser(description='Tool to create and tear-down '
+                        'virtual machines for support engineers. Use the '
+                        '\'examples\' option for usage examples')
 parser.add_argument('action', help='Pick one of the following actions: '
-    'examples, build, list, list-all, delete, power-on, power-off, mem, '
-    'elect, util, log')
+                    'examples, build, list, list-all, delete, power-on, '
+                    'power-off, mem, elect, util, log')
 parser.add_argument('-v', '--vmtype', type=str, help='Used in conjunction '
-    'with "build". Pick one: rm424, rm425, cent6, cent7, ubuntu16')
+                    'with "build". Pick one: rm424, rm425, cent6, cent7, '
+                    'ubuntu16')
 parser.add_argument('-u', '--uuid', type=str, help='UUID of the VM to be  '
-    'actioned; get this from running a \'list\'')
+                    'actioned; get this from running a \'list\'')
 parser.add_argument('-l', '--label', type=str, help='Label for a VM name. '
-    'Allows you to slightly customize the name of your VMs. Limited to 12 '
-    'characters.')
+                    'Allows you to slightly customize the name of your '
+                    ' VMs. Limited to 12 characters.')
 parser.add_argument('-H', '--host', type=str, help='Used solely in '
-    'conjunction with \'list\' and \'list-all\'. Name of the host from '
-    'which to gather the list of virtual machines')
+                    'conjunction with \'list\' and \'list-all\'. Name of '
+                    'the host from which to gather the list of virtual '
+                    'machines')
 args = parser.parse_args()
 
 supbuild_owner = 'Adam McCurdy, amccurdy@zenoss.com'
