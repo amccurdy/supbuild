@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# ermahgerd, testing slack integration
 import argparse as ap
 import ConfigParser
 import sys
