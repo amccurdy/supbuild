@@ -221,10 +221,6 @@ def build_vm(host, vmtype, vmname):
     '''
     Returns a run-result of VM creation
     '''
-    if host == 'all':
-        host = hosts
-    else:
-        host = [host]
     try:
         source_uuid = get_vm_source(host, vmtype)
     except KeyError as e:
