@@ -15,7 +15,7 @@ parser = ap.ArgumentParser(description='Tool to create and tear-down '
                         '\'examples\' option for usage examples')
 parser.add_argument('action', help='Pick one of the following actions: '
                     'examples, build, list, list-all, delete, power-on, '
-                    'power-off, mem, elect, util, log')
+                    'power-off, mem, storage, elect, util, log')
 parser.add_argument('-v', '--vmtype', type=str, help='Used in conjunction '
                     'with "build". Pick one: rm424, rm425, cent6, cent7, '
                     'ubuntu16')
@@ -100,6 +100,37 @@ def get_memory_utilization():
         mem_util[host] = tot
     return mem_util
 
+def get_storage_utilization():
+    '''
+    Return dict with keys of hosts and values of storage utilization in percent
+    '''
+    v_alloc = 'xe sr-list name-label=Local\ storage ' \
+        'params=virtual-allocation|grep -v ^$'
+    p_size = 'xe sr-list name-label=Local\ storage ' \
+        'params=physical-size|grep -v ^$'
+    p_util = 'xe sr-list name-label=Local\ storage ' \
+        'params=physical-utilisation|grep -v ^$'
+    cmds = [v_alloc, p_size, p_util]
+    storage_util = {'supxen1.zenoss.loc': {}, 'supxen2.zenoss.loc': {}, 'supxen3.zenoss.loc': {}}
+    for cmd in cmds:
+        results = run_task(cmd, run_hosts=hosts)
+        contacted = results['contacted']
+        for host, output in contacted.iteritems():
+            try:
+                if 'virtual-allocation' in output['stdout']:
+                    valloc = int(output['stdout'].split()[4])
+                    storage_util[host]['valloc'] = valloc
+                elif 'physical-size' in output['stdout']:
+                    psize = int(output['stdout'].split()[4])
+                    storage_util[host]['psize'] = psize
+                else:
+                    putil = int(output['stdout'].split()[4])
+                    storage_util[host]['putil'] = putil
+            except:
+                fail_storage() #need to write
+    for host in storage_util.keys():
+        storage_util[host]['usage'] = "{0:.2f}".format(float(storage_util[host]['putil']) / float(storage_util[host]['psize']) * 100)
+    return storage_util
 
 def list_vms(host):
     '''
@@ -336,6 +367,9 @@ def display_log():
         print line.replace('\n', '')
     sys.exit(0)
 
+def fail_storage():
+    print "storage error"
+    sys.exit(1)
 
 def fail_config(vmtype):
     '''
@@ -402,6 +436,12 @@ class __main__():
         print 'Host: % memory utilization'
         for key in sorted_hosts:
             print '%s: %s' % (key, mem_util[key])
+    elif args.action == 'storage':
+        storage_util = get_storage_utilization()
+        sorted_hosts = storage_util.keys()
+        sorted_hosts.sort()
+        for host in sorted_hosts:
+            print "%s : %s" % (host, storage_util[host]['usage'])
     elif args.action == 'elect':
         winner = elect_target_host()
         print 'Winner: %s' % winner
