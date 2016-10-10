@@ -111,7 +111,10 @@ def get_storage_utilization():
     p_util = 'xe sr-list name-label=Local\ storage ' \
         'params=physical-utilisation|grep -v ^$'
     cmds = [v_alloc, p_size, p_util]
-    storage_util = {'supxen1.zenoss.loc': {}, 'supxen2.zenoss.loc': {}, 'supxen3.zenoss.loc': {}}
+    storage_util = {'supxen1.zenoss.loc': {},
+                    'supxen2.zenoss.loc': {},
+                    'supxen3.zenoss.loc': {}
+                    }
     for cmd in cmds:
         results = run_task(cmd, run_hosts=hosts)
         contacted = results['contacted']
@@ -129,7 +132,9 @@ def get_storage_utilization():
             except:
                 fail_storage() #need to write
     for host in storage_util.keys():
-        storage_util[host]['usage'] = "{0:.2f}".format(float(storage_util[host]['putil']) / float(storage_util[host]['psize']) * 100)
+        l_putil = float(storage_util[host]['putil'])
+        l_psize = float(storage_util[host]['psize'])
+        storage_util[host]['usage'] = "{0:.2f}".format(l_putil / l_psize * 100)
     return storage_util
 
 def list_vms(host):
@@ -440,6 +445,7 @@ class __main__():
         storage_util = get_storage_utilization()
         sorted_hosts = storage_util.keys()
         sorted_hosts.sort()
+        print 'Host: % Storage utilization'
         for host in sorted_hosts:
             print "%s : %s" % (host, storage_util[host]['usage'])
     elif args.action == 'elect':
