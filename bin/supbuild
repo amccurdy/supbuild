@@ -440,6 +440,7 @@ class __main__():
         storage_util = get_storage_utilization()
         sorted_hosts = storage_util.keys()
         sorted_hosts.sort()
+        print 'Host: % storage utilization'
         for host in sorted_hosts:
             print "%s : %s" % (host, storage_util[host]['usage'])
     elif args.action == 'elect':
