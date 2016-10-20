@@ -373,7 +373,10 @@ def display_log():
     sys.exit(0)
 
 def fail_storage():
-    print "storage error"
+    '''
+    Exit used when failing to pull storage utilization statistics.
+    '''
+    print 'Failed to retrieve storage utilization statistics.'
     sys.exit(1)
 
 def fail_config(vmtype):
@@ -445,7 +448,7 @@ class __main__():
         storage_util = get_storage_utilization()
         sorted_hosts = storage_util.keys()
         sorted_hosts.sort()
-        print 'Host: % Storage utilization'
+        print 'Host: % storage utilization'
         for host in sorted_hosts:
             print "%s : %s" % (host, storage_util[host]['usage'])
     elif args.action == 'elect':
