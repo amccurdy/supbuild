@@ -34,7 +34,11 @@ supbuild_owner = 'Adam McCurdy, amccurdy@zenoss.com'
 logfile_path = '/opt/supbuild/log/supbuild.log'
 configfile_path = '/opt/supbuild/etc/supbuild.conf'
 remote_user = 'root'
-hosts = ['supxen1.zenoss.loc', 'supxen2.zenoss.loc', 'supxen3.zenoss.loc']
+hosts = ['supxen1.zenoss.loc', 
+            'supxen2.zenoss.loc', 
+            'supxen3.zenoss.loc',
+            'supxen4.zenoss.loc'
+        ]
 vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', 'ubuntu16']
 ip_timeout = 120
 
@@ -111,10 +115,9 @@ def get_storage_utilization():
     p_util = 'xe sr-list name-label=Local\ storage ' \
         'params=physical-utilisation|grep -v ^$'
     cmds = [v_alloc, p_size, p_util]
-    storage_util = {'supxen1.zenoss.loc': {},
-                    'supxen2.zenoss.loc': {},
-                    'supxen3.zenoss.loc': {}
-                    }
+    storage_util = {}
+    for h in hosts:
+        storage_util[h] = {}
     for cmd in cmds:
         results = run_task(cmd, run_hosts=hosts)
         contacted = results['contacted']
