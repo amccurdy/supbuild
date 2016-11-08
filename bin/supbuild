@@ -11,8 +11,8 @@ from operator import itemgetter
 from ansible import runner
 
 parser = ap.ArgumentParser(description='Tool to create and tear-down '
-                        'virtual machines for support engineers. Use the '
-                        '\'examples\' option for usage examples')
+                           'virtual machines for support engineers. Use the '
+                           '\'examples\' option for usage examples')
 parser.add_argument('action', help='Pick one of the following actions: '
                     'examples, build, list, list-all, delete, power-on, '
                     'power-off, mem, storage, elect, util, log')
@@ -106,6 +106,7 @@ def get_memory_utilization():
         mem_util[host] = tot
     return mem_util
 
+
 def get_storage_utilization():
     '''
     Return dict with keys of hosts and values of storage utilization in percent
@@ -135,12 +136,13 @@ def get_storage_utilization():
                     putil = int(output['stdout'].split()[4])
                     storage_util[host]['putil'] = putil
             except:
-                fail_storage() #need to write
+                fail_storage()
     for host in storage_util.keys():
         l_putil = float(storage_util[host]['putil'])
         l_psize = float(storage_util[host]['psize'])
         storage_util[host]['usage'] = "{0:.1f}".format(l_putil / l_psize * 100)
     return storage_util
+
 
 def list_vms(host):
     '''
@@ -363,7 +365,7 @@ def log_action(username, action, vmname, host, success):
     '''
     time = strftime('%d %b %Y %H:%M:%S', gmtime())
     line = '%s - %s: %s %s on %s. Success: %s\n' % (time, username, action,
-        vmname, host, success)
+                                                    vmname, host, success)
     with open(logfile_path, 'a') as logfile:
         logfile.write(line)
 
@@ -377,12 +379,14 @@ def display_log():
         print line.replace('\n', '')
     sys.exit(0)
 
+
 def fail_storage():
     '''
     Exit used when failing to pull storage utilization statistics.
     '''
     print 'Failed to retrieve storage utilization statistics.'
     sys.exit(1)
+
 
 def fail_config(vmtype):
     '''
