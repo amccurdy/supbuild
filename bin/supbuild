@@ -137,7 +137,7 @@ def get_storage_utilization():
     for host in storage_util.keys():
         l_putil = float(storage_util[host]['putil'])
         l_psize = float(storage_util[host]['psize'])
-        storage_util[host]['usage'] = "{0:.2f}".format(l_putil / l_psize * 100)
+        storage_util[host]['usage'] = "{0:.1f}".format(l_putil / l_psize * 100)
     return storage_util
 
 def list_vms(host):
