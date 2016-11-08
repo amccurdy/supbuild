@@ -30,21 +30,19 @@ parser.add_argument('-H', '--host', type=str, help='Used solely in '
                     'machines')
 args = parser.parse_args()
 
-supbuild_owner = 'Adam McCurdy, amccurdy@zenoss.com'
-logfile_path = '/opt/supbuild/log/supbuild.log'
-configfile_path = '/opt/supbuild/etc/supbuild.conf'
-remote_user = 'root'
-vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', 'ubuntu16']
-ip_timeout = 120
-
 
 def get_hosts():
     config = ConfigParser.RawConfigParser()
     config.read(configfile_path)
     return config.sections()
 
-
 hosts = get_hosts()
+supbuild_owner = 'Adam McCurdy, amccurdy@zenoss.com'
+logfile_path = '/opt/supbuild/log/supbuild.log'
+configfile_path = '/opt/supbuild/etc/supbuild.conf'
+remote_user = 'root'
+vmtypes = ['rm424', 'rm425', 'cent6', 'cent7', 'ubuntu16']
+ip_timeout = 120
 
 
 def get_vm_source(host, vmtype):
