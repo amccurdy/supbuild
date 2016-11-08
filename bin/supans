@@ -1,0 +1,6 @@
+#!/bin/bash 
+# Runs ansible to run commands on ansible hosts
+# Usage:
+# supans "command"
+# supans "cat /etc/redhat-release"
+ansible xenservers -m shell -a "$@"
