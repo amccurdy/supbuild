@@ -530,8 +530,8 @@ class __main__():
             if new_ip:
                 print '\nIP address: %s' % (new_ip)
                 last_octet = new_ip.split('.')[-1]
-                fqdn = 'suplab%s.zenoss.sup' % (last_octet)
-                #print 'FQDN: %s' % (fqdn)
+                fqdn = 'lab%s.zenoss.sup' % (last_octet)
+                print 'FQDN: %s' % (fqdn)
             else:
                 fail_ip()
     # checking for list actions, looking for host filter, and grabbing/parsing
