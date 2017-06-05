@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+vms = range(100,201)
+vhosts = ['zenoss5', 'hbase', 'rabbitmq', 'opentsdb']
+for vm in vms:
+    print 'lab%s.zenoss.sup.    60  A     10.90.36.%s' % (vm, vm)
+    for vhost in vhosts:
+        print '%s.lab%s.zenoss.sup. CNAME lab%s.zenoss.sup.' % (vhost, vm, vm)
+
